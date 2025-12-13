@@ -1,0 +1,35 @@
+Fala pessoal!
+
+Montei um guia completo de como usar o Claude Code de forma produtiva.
+
+E uma configuracao que uso no dia a dia com comandos, skills e workflows que economizam tempo e tokens.
+
+O que tem no pacote:
+
+- Guia passo a passo de configuracao e uso
+- Commands prontos (/investigate, /create-feature, /review, /open-pr, etc)
+- Skills de boas praticas (type-safety, React, testes, code review)
+- /ultrathink-review - review profundo usando SOLID, DRY, KISS, YAGNI, CUPID
+- Dicas de economia de tokens (88% de reducao)
+- Workflows de paralelizacao com Git Worktrees
+
+Principais comandos:
+
+/investigate {tema} - Entende o problema antes de codar
+/create-feature {desc} - Cria branch, planeja e implementa
+/review-staged - Revisa codigo contra os padroes
+/ultrathink-review - Review profundo com principios de engenharia
+/open-pr {titulo} - Comita e abre PR formatado
+
+Para usar:
+
+1. Baixe o zip ou clone o repo
+2. Copie a pasta .claude para ~/.claude (global) ou para a raiz do projeto
+3. Pronto, os comandos ja ficam disponiveis
+
+Repo: https://github.com/Felipeness/claude-config-felipeness
+
+Qualquer duvida, me chama.
+
+Abs,
+Felipe
