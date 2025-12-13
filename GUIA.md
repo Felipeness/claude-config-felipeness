@@ -599,3 +599,6 @@ Qualquer duvida, me encontre no GitHub.
 GitHub: [github.com/Felipeness](https://github.com/Felipeness)
 Dotfiles: [github.com/Felipeness/dotfiles](https://github.com/Felipeness/dotfiles)
 Config Claude: [github.com/Felipeness/claude-config-felipeness](https://github.com/Felipeness/claude-config-felipeness)
+
+> *"Voce pode ter muito conhecimento, mas sabedoria voce nao aprende em livros."*
+> — Sean (Robin Williams), Genio Indomavel
