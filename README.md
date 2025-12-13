@@ -236,5 +236,7 @@ MIT License - Use e modifique livremente.
 
 **Criado por FelipeNess** | **13/12/2025**
 
+> *"Code is reference, history, and functionality - it must be readable as a journal."*
+
 > *"De um certo ponto adiante não há volta. Esse é o ponto que deve ser alcançado."*
 > — Franz Kafka

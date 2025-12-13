@@ -490,5 +490,7 @@ MIT License - Use e modifique livremente.
 **13 de Dezembro de 2025**
 **GitHub:** [github.com/Felipeness](https://github.com/Felipeness)
 
+> *"Code is reference, history, and functionality - it must be readable as a journal."*
+
 > *"Sempre codifique como se quem vai manter seu codigo fosse um psicopata violento que sabe onde voce mora."*
 > — Martin Golding

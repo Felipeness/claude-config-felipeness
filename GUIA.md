@@ -600,5 +600,7 @@ GitHub: [github.com/Felipeness](https://github.com/Felipeness)
 Dotfiles: [github.com/Felipeness/dotfiles](https://github.com/Felipeness/dotfiles)
 Config Claude: [github.com/Felipeness/claude-config-felipeness](https://github.com/Felipeness/claude-config-felipeness)
 
+> *"Code is reference, history, and functionality - it must be readable as a journal."*
+
 > *"Voce pode ter muito conhecimento, mas sabedoria voce nao aprende em livros."*
 > — Sean (Robin Williams), Genio Indomavel
