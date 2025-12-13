@@ -111,18 +111,18 @@ Highlight good practices:
 
 Good:
 ```
-[!] Line 45: Using `any` type removes type-safety.
+❌ Line 45: Using `any` type removes type safety.
 Suggestion: Define proper interface for user data.
 ```
 
 ```
-[i] Line 67: Consider using early return here to reduce nesting.
+💡 Line 67: Consider using early return here to reduce nesting.
 Current indentation: 4 levels
 Target: 2 levels or less
 ```
 
 ```
-[+] Excellent use of React Query with proper cache invalidation!
+✅ Excellent use of React Query with proper cache invalidation!
 ```
 
 Bad:
@@ -155,8 +155,3 @@ Quick validation before approval:
 - [ ] Clear naming conventions
 - [ ] No over-engineering
 - [ ] Git commits are clean
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

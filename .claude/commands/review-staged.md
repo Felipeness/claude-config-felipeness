@@ -59,9 +59,5 @@ git diff --cached
 - [Issue + suggestion]
 
 ## Approval
-Ready to commit | Minor fixes needed | Needs changes
+✅ Ready to commit | ⚠️ Minor fixes needed | ❌ Needs changes
 ```
-
----
-
-**Criado por FelipeNess** | **12/12/2025**

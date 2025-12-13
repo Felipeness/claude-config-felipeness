@@ -41,8 +41,3 @@ description: TypeScript/JavaScript standards for type-safe, maintainable code.
 ## Tooling
 
 - Use pre-commit hooks for linting/parsing/removing dead code
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

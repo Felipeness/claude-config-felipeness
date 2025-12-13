@@ -33,8 +33,3 @@ description: React/Next.js best practices for modern, performant applications.
 - Data fetching in useEffect
 - Constants inside component bodies
 - isLoading patterns when Suspense works
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

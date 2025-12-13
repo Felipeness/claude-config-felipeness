@@ -53,7 +53,7 @@ Systematic review for quality and consistency.
 - [Issue]: [Fix]
 
 ## Status
-Approved | Minor changes | Needs work
+✅ Approved | ⚠️ Minor changes | ❌ Needs work
 ```
 
 ## Priority
@@ -62,8 +62,3 @@ Approved | Minor changes | Needs work
 2. **High**: Maintainability, readability
 3. **Medium**: Naming, minor refactoring
 4. **Low**: Style preferences
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

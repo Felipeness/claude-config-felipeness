@@ -51,7 +51,3 @@ Plan and implement a new feature: $ARGUMENTS
    - Validate accessibility compliance
 
 Focus on clear, observable, secure, accessible, and performant code that follows established patterns.
-
----
-
-**Criado por FelipeNess** | **12/12/2025**

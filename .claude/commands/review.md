@@ -17,7 +17,7 @@ Review current changes for clarity, observability, security, accessibility, and 
    - **Naming**: Check for descriptive names that say what they mean
    - **Anti-patterns**: Flag ambiguous terms (`data`, `info`, `stuff`, `manager`, `helper`)
    - **Specificity**: Ensure concrete names (`retryAfterMs` > `timeout`, `emailValidator` > `validator`)
-   - **Brevity**: Remove redundant naming (`UserList` -> `Users`)
+   - **Brevity**: Remove redundant naming (`UserList` → `Users`)
    - **Consistency**: Verify naming follows conventions (camelCase functions, kebab-case files, SNAKE_CAPS constants)
 
 3. **TypeScript/JavaScript Standards**
@@ -53,7 +53,7 @@ Review current changes for clarity, observability, security, accessibility, and 
    - **Screen Reader**: Compatible markup and content
 
 8. **Performance Review**
-   - **Algorithm Efficiency**: Avoid O(n^2) when possible
+   - **Algorithm Efficiency**: Avoid O(n²) when possible
    - **Memory Management**: Proper resource cleanup
    - **Bundle Size**: Avoid unnecessary dependencies
    - **Database**: Efficient queries and indexing
@@ -94,8 +94,4 @@ Review current changes for clarity, observability, security, accessibility, and 
 - [Pattern suggestions]
 
 ### Approval Status
-- Approved | Approved with minor changes | Requires changes
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
+- ✅ Approved | ⚠️ Approved with minor changes | ❌ Requires changes

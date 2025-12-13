@@ -53,8 +53,3 @@ Apply these principles to all code.
 - Premature optimization
 - Useless abstractions (functions that mainly call one function, helpers used only once)
 - Over-engineering
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

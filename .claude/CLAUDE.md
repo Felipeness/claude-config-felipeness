@@ -1,5 +1,3 @@
-# Claude Code Configuration by FelipeNess
-
 ## Git Workflow
 - Do not include "Claude Code" in commit messages
 - Use conventional commits (be brief and descriptive)
@@ -21,9 +19,3 @@ All detailed coding guidelines are in the skills:
 - Use `reviewing-code` skill for PR/commit reviews
 - Use `writing` skill for documentation and commit messages
 - Use `copywriting` skill for marketing content
-- Use `ultrathink-review` skill for deep SOLID/DRY/KISS/YAGNI/CUPID analysis
-
----
-
-**Configuracao criada por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

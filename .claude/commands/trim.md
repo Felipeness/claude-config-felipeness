@@ -57,7 +57,3 @@ Email/password auth with secure session cookies.
 
 ## Output
 Provide the trimmed PR description ready to replace the original.
-
----
-
-**Criado por FelipeNess** | **12/12/2025**

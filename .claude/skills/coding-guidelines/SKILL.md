@@ -136,8 +136,3 @@ const handler = handlers[action];
 
 ## Git Workflow
 - Do not include "Claude Code" in commit messages
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
-**GitHub:** [github.com/Felipeness](https://github.com/Felipeness)

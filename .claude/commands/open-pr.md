@@ -50,7 +50,3 @@ EOF
 
 ## Output
 Return the PR URL for review.
-
----
-
-**Criado por FelipeNess** | **12/12/2025**
