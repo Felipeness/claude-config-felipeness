@@ -1,0 +1,68 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(go:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(vercel:*)",
+      "Bash(claude:*)",
+      "Bash(ollama:*)",
+      "Bash(scoop:*)",
+      "Bash(curl:*)",
+
+      "Bash(powershell:*)",
+      "Bash(cmd /c:*)",
+      "Bash(start:*)",
+      "Bash(mkdir:*)",
+      "Bash(dir:*)",
+      "Bash(where:*)",
+      "Bash(findstr:*)",
+      "Bash(del:*)",
+
+      "Bash(systeminfo:*)",
+      "Bash(wmic:*)",
+      "Bash(DISM:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(powercfg:*)",
+      "Bash(schtasks:*)",
+      "Bash(reg:*)",
+      "Bash(explorer:*)",
+
+      "Bash(winget:*)",
+      "Bash(choco:*)",
+      "Bash(refreshenv)",
+      "Bash(wsreset.exe)",
+      "Bash(oh-my-posh:*)",
+
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:www.neowin.net)",
+      "WebFetch(domain:www.tabnews.com.br)",
+      "WebFetch(domain:www.linkedin.com)",
+      "WebFetch(domain:module-federation.io)",
+      "WebFetch(domain:eu.community.samsung.com)",
+      "WebFetch(domain:felipecoelho.hashnode.dev)",
+      "WebFetch(domain:iconsolutions.com)",
+      "WebFetch(domain:careers.iconsolutions.com)",
+      "WebFetch(domain:iconit.inhire.app)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\Program Files"
+    ]
+  }
+}

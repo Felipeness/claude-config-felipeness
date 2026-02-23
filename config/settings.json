@@ -1,0 +1,28 @@
+{
+  "includeCoAuthoredBy": false,
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\play-notification.ps1"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
+  },
+  "alwaysThinkingEnabled": true,
+  "includeLineNumbers": true,
+  "autoSave": true,
+  "preferShorterResponses": false,
+  "includeFileContext": true,
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
+  }
+}

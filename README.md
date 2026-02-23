@@ -3,7 +3,7 @@
 > Configuração profissional para Claude Code com foco em qualidade, type-safety, observabilidade e boas práticas de engenharia de software.
 
 **Autor:** FelipeNess
-**Data:** 12 de Dezembro de 2025
+**Data:** 23 de Fevereiro de 2026
 **GitHub:** [github.com/Felipeness](https://github.com/Felipeness)
 **Dotfiles:** [github.com/Felipeness/dotfiles](https://github.com/Felipeness/dotfiles)
 
@@ -25,26 +25,34 @@
 
 ```
 .claude/
-├── CLAUDE.md              # Instrucoes globais
-├── settings.json          # Configuracoes do Claude Code
-├── commands/              # Slash commands customizados
-│   ├── new-feat.md        # /new-feat - Criar features
-│   ├── review.md          # /review - Revisar codigo
-│   ├── review-staged.md   # /review-staged - Revisar staged
-│   ├── open-pr.md         # /open-pr - Abrir PR
-│   ├── investigate.md     # /investigate - Investigar
-│   └── trim.md            # /trim - Reduzir PR description
-└── skills/                # Skills carregadas sob demanda
-    ├── coding-guidelines/ # Padroes de codigo
-    ├── typescript/        # Standards TypeScript/JS
-    ├── react/             # Best practices React/Next.js
-    ├── software-engineering/ # Principios core
-    ├── planning/          # Planejamento e arquitetura
-    ├── review-changes/    # Code review workflow
-    ├── reviewing-code/    # PR/commit reviews
-    ├── writing/           # Documentacao e commits
-    ├── copywriting/       # Marketing content
-    └── ultrathink-review/ # Review avancado (SOLID, DRY, KISS, YAGNI, CUPID)
+├── CLAUDE.md                # Instrucoes globais (< 150 linhas)
+├── CLAUDE-expanded.md       # Versao completa (todas as regras inline)
+├── settings.json            # Configuracoes do Claude Code
+├── settings.local.json      # Permissoes (wildcards consolidados)
+├── play-notification.ps1    # Som ao completar tarefas
+├── statusline.ps1           # Status line customizada
+├── songs/
+│   └── duolingo-correct.mp3 # Notificacao sonora
+├── commands/                # Slash commands customizados
+│   ├── new-feat.md          # /new-feat - Criar features
+│   ├── create-feature.md    # /create-feature - Feature com branch
+│   ├── review.md            # /review - Revisar codigo
+│   ├── review-staged.md     # /review-staged - Revisar staged
+│   ├── ultrathink-review.md # /ultrathink-review - Review profundo
+│   ├── open-pr.md           # /open-pr - Abrir PR
+│   ├── investigate.md       # /investigate - Investigar
+│   ├── investigate-batch.md # /investigate-batch - Investigar (batch)
+│   └── trim.md              # /trim - Reduzir PR description
+└── skills/                  # Skills carregadas sob demanda
+    ├── coding-guidelines/   # Padroes de codigo
+    ├── typescript/          # Standards TypeScript/JS
+    ├── react/               # Best practices React/Next.js
+    ├── software-engineering/# Principios core
+    ├── planning/            # Planejamento e arquitetura
+    ├── review-changes/      # Code review workflow
+    ├── reviewing-code/      # PR/commit reviews
+    ├── writing/             # Documentacao e commits
+    └── copywriting/         # Marketing content
 ```
 
 ---
@@ -97,6 +105,9 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 | `/review-staged` | Revisa apenas alteracoes staged | `/review-staged` |
 | `/open-pr` | Cria PR com summary e test plan | `/open-pr Add OAuth` |
 | `/investigate` | Investiga antes de planejar | `/investigate auth flow` |
+| `/investigate-batch` | Investiga com perguntas em batch | `/investigate-batch auth flow` |
+| `/create-feature` | Branch + implementacao + QA | `/create-feature Add OAuth` |
+| `/ultrathink-review` | Review profundo SOLID/DRY/KISS/CUPID | `/ultrathink-review` |
 | `/trim` | Reduz PR description em 70% | `/trim` |
 
 ---
@@ -129,20 +140,59 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 
 ---
 
+## MCP Servers
+
+| Server | Pacote | Uso |
+|--------|--------|-----|
+| **Context7** | `@upstash/context7-mcp` | Docs atualizadas de bibliotecas (evita alucinacoes) |
+| **DeepWiki** | `mcp-deepwiki` | Wiki estruturada de repos GitHub |
+| **Playwright** | `@playwright/mcp` | Automacao de browser e testes |
+| **Claude in Chrome** | Extension | Debug console/network/DOM em Chrome real |
+
+### Estrategia MCP
+
+```
+Research (Context7/DeepWiki) → Debug (Playwright/Chrome) → Document (Excalidraw)
+```
+
+> Nao exagere: 4 MCPs diarios e mais efetivo que 15.
+
+---
+
+## Permissoes (Wildcards)
+
+Consolidadas de ~130 entradas para ~47 usando wildcards:
+
+```json
+"Bash(git:*)",    // cobre git add, commit, push, reset, etc.
+"Bash(gh:*)",     // cobre gh pr, gh repo, gh api, etc.
+"Bash(npm:*)",    // cobre npm install, npm run, etc.
+"Bash(pnpm:*)",   // cobre pnpm install, pnpm run, etc.
+"Bash(claude:*)", // cobre claude mcp, claude config, etc.
+"Bash(start:*)",  // cobre todos os start commands
+```
+
+---
+
 ## Workflow Recomendado
 
 ```
 1. Planeje (Shift+Tab para Plan Mode)
-2. Execute (/new-feat ou implementacao direta)
-3. Revise (/review)
+2. Execute (/new-feat ou /create-feature)
+3. Revise (/review ou /ultrathink-review)
 4. Aplique melhorias
 5. Abra PR (/open-pr)
+6. Commite imediatamente apos completar
 ```
 
 ### Dicas
 
-- **Staged vs Unstaged**: Deixe implementacao em staged e melhorias em unstaged para comparar
+- **Plan Mode primeiro**: Sempre comece tarefas nao-triviais em plan mode
+- **50% Context**: Use `/compact` antes de atingir 50% do context window
+- **Subtasks**: Quebre tarefas para caber em 50% do context window
 - **Git Worktrees**: Trabalhe em multiplas features simultaneamente
+- **Staged vs Unstaged**: Deixe implementacao em staged e melhorias em unstaged para comparar
+- **Vanilla > Complexo**: Claude Code com tarefas bem definidas supera workflows fragmentados
 - **Economize contexto**: Nao use Claude como terminal, copie apenas erros relevantes
 
 ---
@@ -202,9 +252,17 @@ O skill `ultrathink-review` implementa um review profundo baseado em:
 }
 ```
 
-### Desabilitar "Claude Code" nos commits
+### Scripts
 
-Ja configurado: `"includeCoAuthoredBy": false`
+| Script | Descricao |
+|--------|-----------|
+| `play-notification.ps1` | Toca som (duolingo-correct.mp3) ao completar tarefas |
+| `statusline.ps1` | Status line: `dir branch* \| model exit_code time` |
+
+### Hooks
+
+- **Notification**: Executa `play-notification.ps1` ao finalizar tarefas
+- **Status Line**: Mostra dir, branch, model e tempo de execucao
 
 ---
 
@@ -234,7 +292,7 @@ MIT License - Use e modifique livremente.
 
 ---
 
-**Criado por FelipeNess** | **13/12/2025**
+**Criado por FelipeNess** | **Atualizado em 23/02/2026**
 
 > *"Code is reference, history, and functionality - it must be readable as a journal."*
 
