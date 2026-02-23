@@ -22,8 +22,13 @@ All detailed coding guidelines are in the skills:
 - Use `coding-guidelines` skill for programming standards
 - Use `typescript` skill for TypeScript/JavaScript standards
 - Use `react` skill for React/Next.js best practices
+- Use `go` skill for Go/Golang standards
 - Use `software-engineering` skill for core principles
 - Use `planning` skill for architecture decisions
+- Use `api-design` skill for REST/webhook API patterns
+- Use `observability` skill for logging, tracing, monitoring
+- Use `debugging` skill for structured bug investigation
+- Use `refactoring` skill for safe code improvements
 - Use `review-changes` skill for code reviews
 - Use `reviewing-code` skill for PR/commit reviews
 - Use `writing` skill for documentation and commit messages
