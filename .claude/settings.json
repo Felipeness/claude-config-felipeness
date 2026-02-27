@@ -13,13 +13,16 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
+  },
   "alwaysThinkingEnabled": true,
   "includeLineNumbers": true,
   "autoSave": true,
   "preferShorterResponses": false,
   "includeFileContext": true,
-  "statusLine": {
-    "type": "command",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
   }
 }

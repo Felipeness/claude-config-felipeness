@@ -2,6 +2,7 @@
 - Do not include "Claude Code" in commit messages
 - Use conventional commits (be brief and descriptive)
 - Commit immediately upon task completion
+- **PR merge order (master + develop)**: resolve conflicts with `master` first, then create a branch from the resolved one targeting `develop`. Avoids double conflict resolution.
 
 ## Workflow
 - Start non-trivial tasks in plan mode
