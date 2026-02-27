@@ -34,3 +34,4 @@ All detailed coding guidelines are in the skills:
 - Use `reviewing-code` skill for PR/commit reviews
 - Use `writing` skill for documentation and commit messages
 - Use `copywriting` skill for marketing content
+- Use `code-quality` skill for CUPID, SOLID, DRY, KISS, YAGNI, defensive programming, and design patterns
