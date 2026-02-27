@@ -439,3 +439,100 @@ Rules:
 - [ ] Framework-centric directory structure
 - [ ] Missing `as const` / `satisfies` where beneficial
 - [ ] Primitive obsession (string where branded type fits)
+
+---
+
+## 11. Composition Patterns
+
+### Middleware / Pipeline
+```typescript
+type Next = () => Promise<void>
+type Middleware<T> = (ctx: T, next: Next) => Promise<void>
+
+function createPipeline<T>(...mws: Middleware<T>[]) {
+  return async (ctx: T) => {
+    const run = async (i: number): Promise<void> => {
+      if (mws[i]) await mws[i](ctx, () => run(i + 1))
+    }
+    await run(0)
+  }
+}
+// Compose auth → validation → handler as independent, testable layers
+```
+
+### Specification Pattern (composable business rules)
+```typescript
+function spec<T>(predicate: (c: T) => boolean) {
+  const self = {
+    isSatisfiedBy: predicate,
+    and: (other: typeof self) => spec<T>((c) => self.isSatisfiedBy(c) && other.isSatisfiedBy(c)),
+    or: (other: typeof self) => spec<T>((c) => self.isSatisfiedBy(c) || other.isSatisfiedBy(c)),
+    not: () => spec<T>((c) => !self.isSatisfiedBy(c)),
+  }
+  return self
+}
+
+const isHighValue = spec<Order>((o) => o.total > 500)
+const isPending = spec<Order>((o) => o.status === "pending")
+const needsReview = isHighValue.and(isPending)
+
+// Rules are named, composable, independently testable
+orders.filter((o) => needsReview.isSatisfiedBy(o))
+```
+
+### Interceptor (bidirectional middleware)
+```typescript
+// Unlike middleware (one direction + next), interceptors hook request AND response
+const authInterceptor = {
+  onRequest(config) {
+    config.headers["Authorization"] = `Bearer ${getToken()}`
+    return config
+  },
+}
+const retryInterceptor = {
+  onResponse: (res) => res,
+  onError: async (err) => fetch(err.config.url, err.config), // retry once
+}
+// Stack: auth → logging → retry, applied to ALL requests without modifying call sites
+```
+
+### Anti-Corruption Layer (isolate external/legacy systems)
+```typescript
+// Adapter (protocol) → Translator (mapping) → Facade (clean domain API)
+// Your domain code NEVER sees external types
+
+class UserGateway {
+  private translator = new UserTranslator()
+  constructor(private adapter: LegacyUserAdapter) {}
+
+  async getUser(id: string): Promise<User | null> {
+    const legacy = await this.adapter.fetchUser(id) // LegacyUserRecord
+    return legacy ? this.translator.fromLegacy(legacy) : null // → clean User
+  }
+}
+// Domain code only sees User, never LegacyUserRecord
+```
+
+### State Machine (eliminate impossible states)
+```typescript
+// XState or manual — define valid states + transitions explicitly
+type Order =
+  | { status: "draft" }
+  | { status: "paid"; paidAt: Date }
+  | { status: "shipped"; paidAt: Date; trackingId: string }
+  | { status: "cancelled"; reason: string }
+
+function transition(state: Order, event: OrderEvent): Order {
+  switch (state.status) {
+    case "draft":
+      if (event.type === "PAY") return { status: "paid", paidAt: event.paidAt }
+      if (event.type === "CANCEL") return { status: "cancelled", reason: event.reason }
+      break
+    case "paid":
+      if (event.type === "SHIP") return { status: "shipped", paidAt: state.paidAt, trackingId: event.trackingId }
+      break
+  }
+  return state // invalid transitions are no-ops
+}
+// Cannot ship without paying. Cannot have contradictory boolean flags.
+```

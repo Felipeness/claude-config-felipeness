@@ -35,3 +35,4 @@ All detailed coding guidelines are in the skills:
 - Use `writing` skill for documentation and commit messages
 - Use `copywriting` skill for marketing content
 - Use `code-quality` skill for CUPID, SOLID, DRY, KISS, YAGNI, defensive programming, and design patterns
+- Use `architecture-patterns` skill for Holonomic Systems, Strangler Fig, CQRS, Saga, resilience, and migration patterns
