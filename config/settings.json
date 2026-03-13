@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "includeCoAuthoredBy": false,
   "hooks": {
     "Notification": [
@@ -11,18 +14,72 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:\\Users\\felip\\.claude\\hooks\\validate-commit.js",
+            "timeout": 5,
+            "statusMessage": "Validating commit..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:\\Users\\felip\\.claude\\hooks\\typecheck-after-edit.sh",
+            "timeout": 30,
+            "statusMessage": "Typechecking..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:\\Users\\felip\\.claude\\hooks\\ralph-stop-hook.js",
+            "timeout": 10,
+            "statusMessage": "Checking Ralph Loop..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:\\Users\\felip\\.claude\\hooks\\cleanup-temp-files.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
   },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true,
   "includeLineNumbers": true,
   "autoSave": true,
   "preferShorterResponses": false,
   "includeFileContext": true,
-  "enabledPlugins": {
-    "gopls-lsp@claude-plugins-official": true
-  }
+  "effortLevel": "high"
 }
