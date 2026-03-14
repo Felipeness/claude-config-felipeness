@@ -148,4 +148,6 @@ Detailed guidelines are in skills (use the most specific one for the task):
 - Architecture: `architecture-patterns` (Holonomic/CQRS/Saga) | `holonomic-systems` (SCS deep-dive) | `api-design` (REST/webhooks)
 - Quality: `review-changes` (PR review) | `ultrathink-review` (deep audit) | `refactoring` (safe improvements) | `pr-jira-review` (PR + Jira cross-reference)
 - Operations: `observability` (logging/tracing) | `debugging` (structured investigation) | `planning` (architecture decisions)
+- Design: `figma-to-code` (pixel-perfect Figma pipeline) | `frontend-design` (UI from scratch)
+- Loops: `ralph-implement` (card Jira) | `ralph-review` (PR) | `ralph-refactor` (refactoring) | `ralph-cancel` (parar)
 - Communication: `writing` (docs/commits) | `copywriting` (marketing)

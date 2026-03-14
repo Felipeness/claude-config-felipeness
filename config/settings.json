@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node C:\\Users\\felip\\.claude\\hooks\\validate-commit.js",
+            "command": "node C:/Users/felip/.claude/hooks/validate-commit.js",
             "timeout": 5,
             "statusMessage": "Validating commit..."
           }
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash C:\\Users\\felip\\.claude\\hooks\\typecheck-after-edit.sh",
+            "command": "bash C:/Users/felip/.claude/hooks/typecheck-after-edit.sh",
             "timeout": 30,
             "statusMessage": "Typechecking..."
           }
@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node C:\\Users\\felip\\.claude\\hooks\\ralph-stop-hook.js",
+            "command": "node C:/Users/felip/.claude/hooks/ralph-stop-hook.js",
             "timeout": 10,
             "statusMessage": "Checking Ralph Loop..."
           }
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash C:\\Users\\felip\\.claude\\hooks\\cleanup-temp-files.sh",
+            "command": "bash C:/Users/felip/.claude/hooks/cleanup-temp-files.sh",
             "timeout": 5
           }
         ]
