@@ -1,4 +1,8 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "MAX_MCP_OUTPUT_TOKENS": "100000"
+  },
   "includeCoAuthoredBy": false,
   "hooks": {
     "Notification": [
@@ -11,18 +15,114 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/validate-commit.js",
+            "timeout": 5,
+            "statusMessage": "Validating commit..."
+          },
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/block-dangerous-commands.sh",
+            "timeout": 3,
+            "statusMessage": "Security check..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/typecheck-after-edit.sh",
+            "timeout": 30,
+            "statusMessage": "Typechecking..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/mirror-pr-reminder.js",
+            "timeout": 5,
+            "statusMessage": "Checking mirror PR..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/ralph-stop-hook.js",
+            "timeout": 10,
+            "statusMessage": "Checking Ralph Loop..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/post-compact-context.sh",
+            "timeout": 5,
+            "statusMessage": "Re-injecting context..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/cleanup-temp-files.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
   },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": false,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "playground@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
   "includeLineNumbers": true,
   "autoSave": true,
   "preferShorterResponses": false,
-  "includeFileContext": true,
-  "enabledPlugins": {
-    "gopls-lsp@claude-plugins-official": true
-  }
+  "includeFileContext": true
 }

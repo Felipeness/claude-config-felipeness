@@ -21,8 +21,8 @@ process.stdin.on('end', () => {
 })
 
 function validate(command) {
-  // So valida git commit
-  if (!/git\s+commit/.test(command)) process.exit(0)
+  // So valida git commit (aceita git -C /path commit)
+  if (!/git\s+(?:-C\s+\S+\s+)?commit/.test(command)) process.exit(0)
 
   // Ignora --amend sem -m
   if (/--amend/.test(command) && !/-m\s/.test(command)) process.exit(0)
@@ -73,9 +73,13 @@ function validate(command) {
     ])
   }
 
-  // Checa se branch tem ticket Jira
+  // Checa se branch tem ticket Jira (usa -C do comando se presente, para pegar a branch do repo correto)
   try {
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
+    const repoDir = extractGitCDir(command)
+    const gitCmd = repoDir
+      ? `git -C "${repoDir}" rev-parse --abbrev-ref HEAD`
+      : 'git rev-parse --abbrev-ref HEAD'
+    const branch = execSync(gitCmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
     const ticketMatch = branch.match(/[A-Z]+-\d+/)
 
     if (ticketMatch && !firstLine.includes(ticketMatch[0])) {
@@ -116,6 +120,14 @@ function extractMessage(command) {
   if (catHeredocMatch) return catHeredocMatch[1].trim()
 
   return null
+}
+
+function extractGitCDir(command) {
+  // git -C /path/to/repo commit ...
+  const match = command.match(/git\s+-C\s+["']?([^\s"']+)["']?\s/)
+  if (!match) return null
+  // Converte MSYS2 path (/c/Users/...) para Windows (C:/Users/...)
+  return match[1].replace(/^\/([a-zA-Z])\//, '$1:/')
 }
 
 function fail(lines) {

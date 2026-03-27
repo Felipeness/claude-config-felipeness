@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "WebSearch",
-
+      "mcp__playwright__*",
       "Bash(git:*)",
       "Bash(gh:*)",
       "Bash(npm:*)",
@@ -17,7 +17,6 @@
       "Bash(ollama:*)",
       "Bash(scoop:*)",
       "Bash(curl:*)",
-
       "Bash(powershell:*)",
       "Bash(cmd /c:*)",
       "Bash(start:*)",
@@ -26,7 +25,6 @@
       "Bash(where:*)",
       "Bash(findstr:*)",
       "Bash(del:*)",
-
       "Bash(systeminfo:*)",
       "Bash(wmic:*)",
       "Bash(DISM:*)",
@@ -35,13 +33,11 @@
       "Bash(schtasks:*)",
       "Bash(reg:*)",
       "Bash(explorer:*)",
-
       "Bash(winget:*)",
       "Bash(choco:*)",
       "Bash(refreshenv)",
       "Bash(wsreset.exe)",
       "Bash(oh-my-posh:*)",
-
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:medium.com)",
@@ -56,7 +52,9 @@
       "WebFetch(domain:felipecoelho.hashnode.dev)",
       "WebFetch(domain:iconsolutions.com)",
       "WebFetch(domain:careers.iconsolutions.com)",
-      "WebFetch(domain:iconit.inhire.app)"
+      "WebFetch(domain:iconit.inhire.app)",
+      "Bash(find . -path ./node_modules -prune -o -path ./.git -prune -o -name *.md -print)",
+      "Bash(wsl -d Ubuntu -- bash -c \"rm -rf /home/ness/node-pr-62340\")"
     ],
     "deny": [],
     "ask": [],

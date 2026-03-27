@@ -1,5 +1,6 @@
-// Ralph Loop — Stop Hook (Node.js)
-// Intercepts Claude's stop event and re-injects the prompt if the task isn't done.
+// Ralph Loop v2 — Stop Hook (Node.js)
+// Hybrid mode: detects external runner (ralph-runner.js) and stays out of the way.
+// Falls back to legacy in-session loop if no external runner is active.
 // Exit 0 = allow stop, JSON output with decision:"block" = continue loop
 
 const fs = require('fs')
@@ -18,9 +19,31 @@ process.stdin.on('end', () => {
 
 function handleStop(hookInput) {
   const cwd = hookInput.cwd || process.cwd()
+
+  // --- v2: Check for external runner ---
+  // If ralph-runner.js is managing the loop, the stop hook should NOT interfere.
+  // The runner handles iteration via separate `claude -p` calls.
+  const stateBaseDir = path.join(cwd, '.claude', 'ralph-state')
+  if (fs.existsSync(stateBaseDir)) {
+    try {
+      const taskDirs = fs.readdirSync(stateBaseDir)
+      for (const taskDir of taskDirs) {
+        const pidPath = path.join(stateBaseDir, taskDir, 'runner.pid')
+        if (fs.existsSync(pidPath)) {
+          const pid = parseInt(fs.readFileSync(pidPath, 'utf8').trim())
+          if (pid && isProcessRunning(pid)) {
+            // External runner is active — allow Claude to stop normally
+            // The runner will launch a new `claude -p` session
+            process.exit(0)
+          }
+        }
+      }
+    } catch { /* ignore errors, fall through to legacy */ }
+  }
+
+  // --- v1 Legacy: In-session loop (backwards compat) ---
   const stateFile = path.join(cwd, '.claude', 'ralph-loop.local.md')
 
-  // No active loop — allow stop
   if (!fs.existsSync(stateFile)) process.exit(0)
 
   let content
@@ -42,35 +65,27 @@ function handleStop(hookInput) {
   const taskType = frontmatter.task_type || 'unknown'
   const taskInput = frontmatter.task_input || ''
 
-  // Get last assistant message
   const lastMessage = hookInput.last_assistant_message || extractFromTranscript(hookInput.transcript_path)
 
-  // Check for completion promise
   const promiseRegex = new RegExp(`<promise>\\s*${escapeRegex(completionPromise)}\\s*</promise>`, 's')
   if (promiseRegex.test(lastMessage)) {
     process.stderr.write(`Ralph Loop: task complete! (${taskType}: ${taskInput}, ${iteration} iterations)\n`)
-    cleanup(stateFile, cwd, taskInput)
+    cleanup(stateFile)
     process.exit(0)
   }
 
-  // Check max iterations
   if (maxIterations > 0 && iteration >= maxIterations) {
     process.stderr.write(`Ralph Loop: max iterations reached (${iteration}/${maxIterations}). Stopping.\n`)
-    cleanup(stateFile, cwd, taskInput)
+    cleanup(stateFile)
     process.exit(0)
   }
 
-  // Continue loop — increment iteration and re-inject prompt
   const nextIteration = iteration + 1
-  const updatedContent = content.replace(
-    /^iteration:\s*\d+/m,
-    `iteration: ${nextIteration}`
-  )
+  const updatedContent = content.replace(/^iteration:\s*\d+/m, `iteration: ${nextIteration}`)
 
   try {
     fs.writeFileSync(stateFile, updatedContent, 'utf8')
   } catch {
-    // If we can't write, allow stop gracefully
     process.exit(0)
   }
 
@@ -80,22 +95,27 @@ function handleStop(hookInput) {
     ? `[Ralph Loop — iteration ${nextIteration}/${maxIterations}]\n\n${body.trim()}`
     : `[Ralph Loop — iteration ${nextIteration}/${maxIterations}] Continue working on the task. Output <promise>${completionPromise}</promise> when complete.`
 
-  // Output JSON to block stop and re-inject prompt
-  const output = JSON.stringify({
+  process.stdout.write(JSON.stringify({
     decision: 'block',
     reason: continuationPrompt,
     systemMessage: systemMsg
-  })
-
-  process.stdout.write(output)
+  }))
   process.exit(0)
+}
+
+function isProcessRunning(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function extractFromTranscript(transcriptPath) {
   if (!transcriptPath) return ''
   try {
     const lines = fs.readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean)
-    // Read from the end to find last assistant message
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const entry = JSON.parse(lines[i])
@@ -107,7 +127,7 @@ function extractFromTranscript(transcriptPath) {
         }
       } catch { continue }
     }
-  } catch { /* ignore */ }
+  } catch {}
   return ''
 }
 
@@ -120,7 +140,6 @@ function parseFrontmatter(content) {
     const kv = line.match(/^(\w+):\s*(.*)$/)
     if (kv) {
       let val = kv[2].trim()
-      // Remove surrounding quotes
       if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
         val = val.slice(1, -1)
       }
@@ -131,8 +150,8 @@ function parseFrontmatter(content) {
   return { frontmatter, body: match[2] }
 }
 
-function cleanup(stateFile, cwd, taskInput) {
-  try { fs.unlinkSync(stateFile) } catch { /* ignore */ }
+function cleanup(stateFile) {
+  try { fs.unlinkSync(stateFile) } catch {}
 }
 
 function escapeRegex(str) {
