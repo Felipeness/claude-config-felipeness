@@ -44,21 +44,53 @@
 │   ├── investigate.md        # /investigate - Investigar
 │   ├── investigate-batch.md  # /investigate-batch - Investigar (batch)
 │   └── trim.md               # /trim - Reduzir PR description
-└── skills/                   # Skills carregadas sob demanda (14 skills)
-    ├── coding-guidelines/    # Padroes de codigo TS/React
-    ├── typescript/           # Standards TypeScript/JS
-    ├── react/                # Best practices React 19/Next.js
-    ├── go/                   # Standards Go idiomatico
-    ├── software-engineering/ # Principios core
-    ├── planning/             # Planejamento e arquitetura
-    ├── api-design/           # REST/webhook API patterns
-    ├── observability/        # Logging, tracing, monitoring
-    ├── debugging/            # Investigacao estruturada de bugs
-    ├── refactoring/          # Refatoracao segura
-    ├── review-changes/       # Code review workflow
-    ├── reviewing-code/       # PR/commit reviews
-    ├── writing/              # Documentacao e commits
-    └── copywriting/          # Marketing content
+├── skills/                   # Skills customizadas (28 skills)
+│   ├── api-design/           # REST/webhook API patterns
+│   ├── architecture-patterns/ # CQRS, Event Sourcing, Saga, etc.
+│   ├── code-quality/         # CUPID/SOLID/DRY/KISS/YAGNI
+│   ├── code-review-comments/ # Tom de code review em PRs
+│   ├── codebase-analysis/    # Analise multi-agente de repos
+│   ├── coding-guidelines/    # Padroes de codigo TS/React
+│   ├── copywriting/          # Marketing content
+│   ├── debugging/            # Investigacao estruturada de bugs
+│   ├── figma-code-connect/   # Figma Code Connect mappings
+│   ├── figma-to-code/        # Pipeline pixel-perfect Figma
+│   ├── functional-programming/ # FP, ROP, imutabilidade
+│   ├── go/                   # Standards Go idiomatico
+│   ├── holonomic-systems/    # SCS, holarchy, Koestler
+│   ├── mirror-pr/            # PR espelho master → develop
+│   ├── observability/        # Logging, tracing, monitoring
+│   ├── planning/             # Planejamento e arquitetura
+│   ├── pr-jira-review/       # PR review + Jira cross-ref
+│   ├── ralph-cancel/         # Cancelar Ralph Loop
+│   ├── ralph-debug/          # Loop autonomo de debug
+│   ├── ralph-docs/           # Loop autonomo de docs
+│   ├── ralph-implement/      # Loop autonomo Jira → PR
+│   ├── ralph-migrate/        # Loop autonomo de migracao
+│   ├── ralph-perf/           # Loop autonomo de performance
+│   ├── ralph-refactor/       # Loop autonomo de refactoring
+│   ├── ralph-review/         # Loop autonomo de PR review
+│   ├── ralph-test/           # Loop autonomo TDD
+│   ├── react/                # Best practices React 19/Next.js
+│   ├── refactoring/          # Refatoracao segura
+│   ├── review-changes/       # Code review workflow
+│   ├── reviewing-code/       # PR/commit reviews
+│   ├── software-engineering/ # Principios core
+│   ├── typescript/           # Standards TypeScript/JS
+│   ├── ultrathink-review/    # Deep review SOLID/DRY/KISS
+│   └── writing/              # Documentacao e commits
+├── hooks/                    # Git/CLI hooks
+│   ├── block-dangerous-commands.sh
+│   ├── cleanup-temp-files.sh
+│   ├── mirror-pr-reminder.js
+│   ├── post-compact-context.sh
+│   ├── ralph-stop-hook.js
+│   ├── typecheck-after-edit.sh
+│   └── validate-commit.js
+├── rules/
+│   └── figma-design-system.md # Regras Figma-to-code
+└── teams/
+    └── default/inboxes/      # Team configs (t3-implementer, team-lead)
 ```
 
 ---
@@ -96,7 +128,13 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 | `react` | Best practices React 19/Next.js | Componentes, hooks, data fetching |
 | `go` | Go idiomatico, concorrencia, error handling | APIs e servicos em Go |
 | `api-design` | REST/webhook patterns, validacao, idempotencia | Projetando endpoints, webhooks, contratos |
+| `architecture-patterns` | CQRS, Event Sourcing, Saga, Circuit Breaker | Desenhando arquitetura de sistemas |
+| `holonomic-systems` | SCS, holarchy, Koestler, Conway's Law | System-of-systems, service boundaries |
+| `functional-programming` | FP, ROP, imutabilidade, composicao | Regras de negocio, pipelines de dados |
+| `code-quality` | CUPID/SOLID/DRY/KISS/YAGNI completo | Escrevendo ou revisando qualquer codigo |
 | `observability` | Structured logging, tracing, error tracking | Adicionando monitoring a servicos |
+| `figma-to-code` | Pipeline pixel-perfect Figma → codigo | Implementando designs do Figma |
+| `figma-code-connect` | Figma Code Connect (.figma.tsx) | Mapeando componentes Figma → codebase |
 
 ### Qualidade
 
@@ -104,8 +142,27 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 |-------|-----------|-------------|
 | `review-changes` | Workflow de code review sistematico | Revisando PRs com checklist |
 | `reviewing-code` | Checklist de review rapido | Reviews curtos e objetivos |
+| `ultrathink-review` | Deep review SOLID/DRY/KISS/YAGNI/CUPID | PRs criticas ou complexas |
+| `pr-jira-review` | PR review + Jira cross-reference | PRs com card Jira associado |
+| `code-review-comments` | Tom e vocabulario de review | Escrevendo comentarios em PRs |
+| `codebase-analysis` | Analise multi-agente de repositorio | Auditoria completa de codebase |
 | `refactoring` | Refatoracao segura e incremental | Aplicando melhorias pos-review |
 | `debugging` | Investigacao estruturada de bugs | Bugs, erros runtime, comportamento inesperado |
+| `mirror-pr` | PR espelho master → develop | Repos com dual-branch (echo-atende) |
+
+### Ralph Loops (Agentes Autonomos)
+
+| Skill | Descricao | Quando Usar |
+|-------|-----------|-------------|
+| `ralph-implement` | Jira card → implementacao → PR | Implementar card completo |
+| `ralph-review` | PR review autonomo com fix loop | Review e correcao automatica |
+| `ralph-refactor` | Refactoring incremental com testes | Refatoracao autonoma |
+| `ralph-test` | TDD loop: testes primeiro | Desenvolvimento test-first |
+| `ralph-debug` | Debug autonomo: reproduzir → fix → regressao | Investigar e corrigir bugs |
+| `ralph-docs` | Gerar/atualizar documentacao | Cobertura de docs |
+| `ralph-migrate` | Migracoes incrementais com rollback | DB, API, framework, lib |
+| `ralph-perf` | Benchmark → otimizar → re-benchmark | Performance targets |
+| `ralph-cancel` | Cancelar loop ativo | Parar qualquer Ralph Loop |
 
 ### Planejamento e Comunicacao
 
@@ -115,6 +172,61 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 | `planning` | Planejamento e arquitetura completa | Novos projetos, escolha de tecnologias |
 | `writing` | Documentacao, commits, PRs | Escrita tecnica, README, mensagens |
 | `copywriting` | Marketing e vendas | Landing pages, descricoes de produto |
+
+---
+
+## Plugins Instalados
+
+Alem das skills customizadas acima, este setup usa **14 plugins oficiais** (`claude-plugins-official`) que adicionam skills, commands, agents e LSP integrations automaticamente. Plugins sao gerenciados pelo Claude Code e atualizados automaticamente — **nao estao neste repo** pois sao instalados via `claude plugins install`.
+
+### Para instalar todos os plugins
+
+```bash
+claude plugins install superpowers
+claude plugins install frontend-design
+claude plugins install commit-commands
+claude plugins install pr-review-toolkit
+claude plugins install feature-dev
+claude plugins install hookify
+claude plugins install playground
+claude plugins install skill-creator
+claude plugins install claude-code-setup
+claude plugins install claude-md-management
+claude plugins install security-guidance
+claude plugins install typescript-lsp
+claude plugins install gopls-lsp
+claude plugins install pyright-lsp
+```
+
+### Skills de plugins (nao incluidas neste repo)
+
+| Plugin | Skills/Commands | Descricao |
+|--------|----------------|-----------|
+| **superpowers** v5.0.6 | `brainstorming`, `writing-plans`, `executing-plans`, `verification-before-completion`, `test-driven-development`, `systematic-debugging`, `receiving-code-review`, `requesting-code-review`, `using-git-worktrees`, `subagent-driven-development`, `finishing-a-development-branch`, `dispatching-parallel-agents`, `writing-skills` | Framework completo de workflow — brainstorm, planos, TDD, debug, worktrees, code review |
+| **frontend-design** | `frontend-design` | UI/UX design com alta qualidade visual, evita estetica generica de AI |
+| **commit-commands** | `/commit`, `/commit-push-pr`, `/clean_gone` | Git commit, push+PR, limpar branches gone |
+| **pr-review-toolkit** | `/review-pr`, agents: `code-reviewer`, `code-simplifier`, `comment-analyzer`, `pr-test-analyzer`, `type-design-analyzer`, `silent-failure-hunter` | Suite completa de review com 6 agentes especializados |
+| **feature-dev** | `feature-dev`, agents: `code-explorer`, `code-architect`, `code-reviewer` | Desenvolvimento guiado de features com agentes de exploracao e arquitetura |
+| **hookify** | `/hookify`, `/hookify help`, `/hookify configure`, `/hookify list`, `writing-rules` | Criar hooks para prevenir comportamentos indesejados |
+| **playground** | `playground` | Criar playgrounds HTML interativos single-file |
+| **skill-creator** | `skill-creator` | Criar, modificar e testar skills com evals |
+| **claude-code-setup** | `claude-automation-recommender` | Analisa codebase e recomenda automacoes |
+| **claude-md-management** | `claude-md-improver`, `/revise-claude-md` | Auditar e melhorar CLAUDE.md |
+| **security-guidance** | *(security rules)* | Orientacoes de seguranca automaticas |
+
+### LSP Plugins (Language Server Protocol)
+
+| Plugin | Linguagem | Funcionalidade |
+|--------|-----------|----------------|
+| **typescript-lsp** | TypeScript/JavaScript | Autocomplete, go-to-definition, diagnostics |
+| **gopls-lsp** | Go | Autocomplete, type checking, diagnostics |
+| **pyright-lsp** | Python | Type checking, diagnostics |
+
+### Nota sobre `defuddle`
+
+A skill `defuddle` e instalada como symlink via plugin e extrai markdown limpo de paginas web. Nao esta neste repo por ser um link simbolico gerenciado pelo plugin.
+
+---
 
 ### Como as skills se conectam
 
@@ -143,6 +255,7 @@ Publicar       →  writing + open-pr
 | `/ultrathink-review` | Review profundo SOLID/DRY/KISS/YAGNI/CUPID | `/ultrathink-review` |
 | `/open-pr` | Cria PR com summary e test plan | `/open-pr Add OAuth` |
 | `/trim` | Reduz PR description em 70% | `/trim` |
+| `/fp-audit` | Audita codigo por violacoes de FP | `/fp-audit` |
 
 ---
 
@@ -538,7 +651,7 @@ commit                      →  Um refactoring por commit
 | Abordagem | Tokens |
 |-----------|--------|
 | Sem skills (tudo no CLAUDE.md) | ~1000 tokens |
-| Com skills (14 sob demanda) | ~150 tokens |
+| Com skills (28 customizadas + plugins sob demanda) | ~150 tokens |
 
 **Economia:** ~85% de tokens por sessao
 
@@ -560,7 +673,7 @@ MIT License - Use e modifique livremente.
 
 ---
 
-**Criado por FelipeNess** | **Atualizado em 23/02/2026**
+**Criado por FelipeNess** | **Atualizado em 27/03/2026**
 
 > *"Code is reference, history, and functionality - it must be readable as a journal."*
 
