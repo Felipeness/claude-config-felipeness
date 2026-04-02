@@ -1,6 +1,6 @@
 ## Git Workflow
 - Do not include "Claude Code" in commit messages
-- Commit immediately upon task completion
+- Commit immediately upon task completion (override: sempre commitar sem pedir quando a task esta completa)
 - **PR merge order (master + develop)**: resolve conflicts with `master` first, then create a branch from the resolved one targeting `develop`. Avoids double conflict resolution.
 
 ### Branch naming
@@ -46,6 +46,10 @@ Formato: `type(scope): descricao em minuscula`
 
 ## Preferências de código (agnóstico de linguagem — TS, Go, Python)
 
+### Meta-regra
+- Toda regra neste documento e uma heuristica, nao uma lei. Se seguir a regra cria mais complexidade do que viola-la, documente o motivo e siga em frente
+- Severidade: **Hard** (nunca quebrar: no `any`, no erros engolidos, timeout em chamadas externas) > **Strong** (quebrar com justificativa: funcoes < 20 linhas, early return, composition > inheritance) > **Soft** (time discretion: naming conventions, test naming)
+
 ### Carga cognitiva e legibilidade
 - Priorize redução de carga cognitiva em toda decisão de código
 - Código lê de cima para baixo como um jornal — manchetes (funções) → detalhes (implementação)
@@ -65,6 +69,8 @@ Formato: `type(scope): descricao em minuscula`
 - Nesting max 2 níveis — extrair função no 3º
 - Hash maps/strategy maps > switch/if-else chains — extensível, testável
 - Operações baratas primeiro, caras por último em condições
+- Bounded parallelism (`p-limit` em TS, buffered channels em Go) — nunca `Promise.all` com N ilimitado
+- Cancellation signals em operações longas: `AbortController` (Node), `context.Context` (Go)
 
 ### Tipos e segurança
 - Tipos fortes sempre — nunca `any` (TS), nunca `interface{}` sem necessidade (Go), type hints (Python)
@@ -75,23 +81,25 @@ Formato: `type(scope): descricao em minuscula`
 - Exhaustive matching — usar `never` assertion ou ts-pattern `.exhaustive()` em switches de unions
 - `as const` objects > TypeScript enums — menor bundle, tree-shakeable, sem surpresas de reverse mapping
 - Timeouts e retry limits explícitos em toda chamada externa — nunca confiar em defaults de libs
+- Cache keys nomeados pela query que substituem, não pela entidade — TTL curto para dados voláteis, longo para reference data, indefinido com invalidação explícita para aggregates
 
 ### Paradigma e estrutura
-- Composição > herança — sempre
+- Composição > herança — exceto Liskov genuíno ou exigência de framework (NestJS guards, extends Error)
 - Funções puras para regras de negócio, side effects isolados nas bordas (Functional Core / Imperative Shell)
 - Imutabilidade por padrão — `const`/`readonly` (TS), values (Go), frozen/tuple (Python)
-- CQS: query OU command, nunca ambos — funções que leem não alteram estado
+- CQS: query OU command, nunca ambos — funções que leem não alteram estado (exceto operações atômicas: `pop`, `getOrCreate`, `compareAndSwap` onde separação criaria race conditions)
 - Declarativo > imperativo — diga O QUE, não COMO (`.map/.filter` > `for` loops)
 - Idempotência em operações de escrita — SET > INCREMENT, idempotency keys
 
 ### Organização
-- Funções < 20 linhas, max 3 parâmetros (usar struct/objeto se mais)
+- Funções < 20 linhas, max 3 parâmetros (usar struct/objeto se mais) (heurística — strategy maps, state machines e test setup podem exceder se o nível de abstração continua uniforme)
 - Código deve gritar o domínio, não o framework (Screaming Architecture)
 - Erros com contexto da operação sem "failed to" redundante — `"create user: %w"` > `"failed to create user: failed to insert: failed to..."`
-- Named exports > default exports (TS), exported types claros (Go)
+- Named exports > default exports (TS), exported types claros (Go) (exceto Next.js pages/layouts que exigem default)
 - Result/Either pattern para erros esperados do negócio, exceptions para erros do sistema
-- Import direto do arquivo fonte > barrel files (index.ts) — tree-shaking, sem circular deps
+- Import direto do arquivo fonte > barrel files (index.ts) — tree-shaking, sem circular deps (exceto boundary pública de um pacote/lib onde o barrel file É a API surface)
 - Table-driven tests para variações de input/output — elimina copy-paste de test functions
+- Log levels como contrato: ERROR = pages alguém, WARN = investigar eventualmente, INFO = evento de negócio, DEBUG = contexto dev. JSON structured com `requestId`, `userId`, `operation`, `durationMs`. Nunca logar PII, tokens, ou passwords
 
 ## Anti-patterns comuns (evitar sempre)
 
@@ -100,22 +108,17 @@ Formato: `type(scope): descricao em minuscula`
 - Não expandir escopo além do pedido — corrigir 1 bug não é desculpa para refatorar 3 módulos não-relacionados
 - Não adicionar features, validações ou configurabilidade que não foram pedidas
 - Não criar arquivos novos quando editar um existente resolve
-- Não criar barrel files (index.ts) só para re-exportar — mata tree-shaking e esconde circular deps
 
 ### Tipos e segurança
-- Não usar `any` — preferir `unknown` com type guards ou tipos explícitos
 - Não usar `as` para forçar tipos — escrever narrowing/type guard adequado
 - Não usar `!` (non-null assertion) — tratar o caso undefined explicitamente
 - Não usar strings onde union types/enums/branded types servem — evitar stringly-typed APIs
 - Não espalhar `req.body` direto em operações de banco — allowlist de campos explícita (mass assignment)
-- Não usar TypeScript enums — preferir `as const` objects (menor bundle, sem reverse mapping surpresa)
 
 ### Erros e resiliência
 - Não envolver tudo em try/catch genérico — tratar erros específicos nas boundaries
 - Não engolir erros silenciosamente — `catch {}` vazio é proibido, sempre logar ou propagar
-- Não empilhar "failed to" em cada camada de erro — contexto sem redundância
 - Não over-engineer error handling para cenários que não podem acontecer
-- Não fazer chamadas externas sem timeout explícito — HTTP, DB, RPC sempre com deadline
 - Não fazer queries sem LIMIT/paginação — `SELECT *` sem limite é bomba em produção
 
 ### Performance e concorrência
@@ -132,8 +135,16 @@ Formato: `type(scope): descricao em minuscula`
 - Não deprecar — substituir. Remover código antigo completamente
 - Não deixar código comentado — deletar (git é o histórico)
 - Não criar interface 1:1 por classe para "testabilidade" — SOLID sem dogma
-- Não validar redundantemente em todas as camadas — validar na boundary, confiar internamente
 - Não usar APIs/libs deprecated do training data — verificar versão atual antes de sugerir
+
+## Testing Strategy
+- Test naming: verbo 3a pessoa descrevendo comportamento, sem "should" — `createsUserWithValidEmail`, `rejectsInvalidPayment`
+- Test location: colocado junto ao source (`.test.ts` ao lado do `.ts`), não em `__tests__/`
+- Mocking philosophy: mock o que não controla (APIs externas, clocks), fake o que controla (repos com in-memory impl). Nunca mock o que está testando
+- Table-driven tests para variações de input/output — elimina copy-paste
+- Integration > Unit para serviços. Unit só para funções puras com lógica de negócio complexa
+- Property-based testing (`@fast-check/vitest`) para invariantes de negócio (financial calcs, serialization roundtrips)
+- Testcontainers para DB real em tests de integração — zero shared state
 
 ## Important Concepts
 Focus on these principles in all code:
@@ -144,10 +155,10 @@ Focus on these principles in all code:
 
 Detailed guidelines are in skills (use the most specific one for the task):
 - Code: `code-quality` (CUPID/SOLID/patterns) | `functional-programming` (FP/ROP)
-- Language: `typescript` (TS/JS) | `go` (Go) | `react` (React/Next.js)
+- Language: `typescript` (TS/JS) | `go` (Go) | `react` (React/Next.js) | `nestjs` (NestJS backend)
 - Architecture: `architecture-patterns` (Holonomic/CQRS/Saga) | `holonomic-systems` (SCS deep-dive) | `api-design` (REST/webhooks)
 - Quality: `ultrathink-review` (deep audit) | `pr-jira-review` (PR + Jira) | `refactoring` (safe improvements)
 - Operations: `observability` (logging/tracing) | `debugging` (structured investigation) | `planning` (architecture decisions)
 - Design: `figma-to-code` (pixel-perfect Figma pipeline) | `frontend-design` (UI from scratch)
-- Loops: `ralph-implement` (card Jira) | `ralph-review` (PR) | `ralph-refactor` (refactoring) | `ralph-cancel` (parar)
+- Loops: `ralph-implement` (card Jira) | `ralph-review` (PR) | `ralph-refactor` (refactoring) | `ralph-cancel` (parar) | `ralph-debug` (bugs) | `ralph-test` (TDD) | `ralph-migrate` (migrations) | `ralph-perf` (performance) | `ralph-docs` (documentação)
 - Communication: `code-review-comments` (tom de review)

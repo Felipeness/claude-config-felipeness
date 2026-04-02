@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o pipefail
 # Hook: PostToolUse (Edit|Write)
 # Roda typecheck apos editar arquivos TS/TSX/JS/JSX
 # Usa node ao inves de jq
@@ -40,7 +41,7 @@ done
 
 # Roda tsc --noEmit com output limitado
 cd "$PROJECT_DIR"
-OUTPUT=$(npx tsc --noEmit --pretty 2>&1 | head -30)
+OUTPUT=$(./node_modules/.bin/tsc --noEmit --incremental --pretty 2>&1 | head -30)
 
 if [ $? -ne 0 ]; then
   echo "$OUTPUT" >&2

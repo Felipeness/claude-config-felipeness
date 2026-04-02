@@ -1,12 +1,53 @@
 // Hook: PreToolUse (Bash)
-// Valida commit messages contra conventional commits + Jira ticket
-// Exit 0 = permite, Exit 2 = bloqueia
+// Unified guard: blocks dangerous commands + validates conventional commits
+// Exit 0 = allow, Exit 2 = block
 
 const { execSync } = require('child_process')
 
+// --- Dangerous command patterns ---
+const DANGEROUS_PATTERNS = [
+  'rm -rf /',
+  'rm -rf ~',
+  'rm -rf .',
+  'git push.*--force.*main',
+  'git push.*--force.*master',
+  'git push.*--force.*develop',
+  'git reset --hard',
+  'git clean -fd',
+  'git checkout -- .',
+  'git restore .',
+  'git branch -D',
+  'DROP TABLE',
+  'DROP DATABASE',
+  'TRUNCATE',
+  'format c:',
+  '> /dev/sda',
+  'chmod.*777',
+  'curl.*\\|.*bash',
+  'curl.*\\|.*sh\\b',
+  'wget.*\\|.*bash',
+  'wget.*\\|.*sh\\b',
+  'mkfs',
+  'dd if=',
+  'npm publish',
+  'del /s /q',
+  'rd /s /q',
+  'rmdir /s /q',
+  'reg delete',
+  'schtasks /create',
+  'wmic process call create',
+  'certutil.*-urlcache',
+  'git filter-branch',
+  'git reflog expire',
+]
+
+const DANGEROUS_REGEXES = DANGEROUS_PATTERNS.map(p => new RegExp(p, 'i'))
+
+// --- Commit validation ---
 const VALID_TYPES = ['feat', 'fix', 'chore', 'refactor', 'docs', 'test', 'style', 'perf', 'ci', 'build', 'revert']
 const TYPES_RE = VALID_TYPES.join('|')
-const COMMIT_RE = new RegExp(`^(${TYPES_RE})(\\([a-zA-Z0-9_./-]+\\))?: .+`)
+// Accepts optional ! before colon for breaking changes: type(scope)!: or type!:
+const COMMIT_RE = new RegExp(`^(${TYPES_RE})(\\([a-zA-Z0-9_./-]+\\))?!?: .+`)
 
 let input = ''
 process.stdin.on('data', chunk => input += chunk)
@@ -14,48 +55,79 @@ process.stdin.on('end', () => {
   try {
     const { tool_input } = JSON.parse(input)
     const command = tool_input?.command || ''
-    validate(command)
+    guard(command)
   } catch {
     process.exit(0)
   }
 })
 
-function validate(command) {
-  // So valida git commit (aceita git -C /path commit)
-  if (!/git\s+(?:-C\s+\S+\s+)?commit/.test(command)) process.exit(0)
+function guard(command) {
+  checkDangerous(command)
+  validateCommit(command)
+  process.exit(0)
+}
 
-  // Ignora --amend sem -m
-  if (/--amend/.test(command) && !/-m\s/.test(command)) process.exit(0)
+// --- Dangerous command check (fast rejection) ---
 
-  // Extrai mensagem do commit
+function checkDangerous(command) {
+  for (const re of DANGEROUS_REGEXES) {
+    if (re.test(command)) {
+      fail([
+        `BLOCKED: Dangerous command detected: ${re.source}`,
+        'Use a safer alternative or ask the user for explicit confirmation.',
+      ])
+    }
+  }
+}
+
+// --- Commit message validation ---
+
+function validateCommit(command) {
+  // Only validate git commit commands (accepts git -C /path commit)
+  if (!/git\s+(?:-C\s+\S+\s+)?commit/.test(command)) return
+
+  // Ignore --amend without -m
+  if (/--amend/.test(command) && !/-m\s/.test(command)) return
+
   const msg = extractMessage(command)
-  if (!msg) process.exit(0)
+  if (!msg) return
 
   const firstLine = msg.split('\n')[0].trim()
 
-  // Valida formato conventional commit
+  // Block "Claude Code" in commit messages (CLAUDE.md rule)
+  if (/claude code/i.test(firstLine)) {
+    fail([
+      'Commit message contains "Claude Code".',
+      'CLAUDE.md prohibits mentioning Claude Code in commit messages.',
+      `Recebido: ${firstLine}`,
+    ])
+  }
+
+  // Validate conventional commit format
   if (!COMMIT_RE.test(firstLine)) {
     fail([
       'Commit message fora do padrao conventional commits.',
       '',
       'Formato esperado: type(scope): descricao',
+      'Breaking changes: type(scope)!: descricao',
       `Tipos validos: ${VALID_TYPES.join(', ')}`,
       '',
       'Exemplos:',
       '  feat(CC-1234): add gamification scoring',
       '  fix(CC-5678): handle null user in payment',
       '  chore: update dependencies',
+      '  feat(CC-1234)!: change API response format',
       '',
       `Mensagem recebida: ${firstLine}`,
     ])
   }
 
-  // Extrai descricao (depois do type(scope): )
-  const descMatch = firstLine.match(new RegExp(`^(${TYPES_RE})(\\([^)]+\\))?: (.+)`))
+  // Extract description (after type(scope)!?: )
+  const descMatch = firstLine.match(new RegExp(`^(${TYPES_RE})(\\([^)]+\\))?!?: (.+)`))
   if (descMatch) {
     const desc = descMatch[3]
 
-    // Descricao deve comecar com minuscula
+    // Description must start with lowercase
     if (/^[A-Z]/.test(desc)) {
       fail([
         'Descricao do commit deve comecar com letra minuscula.',
@@ -73,7 +145,7 @@ function validate(command) {
     ])
   }
 
-  // Checa se branch tem ticket Jira (usa -C do comando se presente, para pegar a branch do repo correto)
+  // Check if branch has Jira ticket (uses -C from command if present)
   try {
     const repoDir = extractGitCDir(command)
     const gitCmd = repoDir
@@ -85,7 +157,7 @@ function validate(command) {
     if (ticketMatch && !firstLine.includes(ticketMatch[0])) {
       const ticket = ticketMatch[0]
       const suggestion = firstLine.replace(
-        new RegExp(`^(${TYPES_RE})(\\([^)]*\\))?(: )`),
+        new RegExp(`^(${TYPES_RE})(\\([^)]*\\))?(!?:)`),
         `$1(${ticket})$3`
       )
       fail([
@@ -97,10 +169,8 @@ function validate(command) {
       ])
     }
   } catch {
-    // Nao esta em um repo git, ignora
+    // Not in a git repo, skip
   }
-
-  process.exit(0)
 }
 
 function extractMessage(command) {
@@ -115,7 +185,7 @@ function extractMessage(command) {
   const singleQuoteMatch = command.match(/-m\s+'([^']+)'/)
   if (singleQuoteMatch) return singleQuoteMatch[1]
 
-  // -m "$(cat <<'EOF' ... EOF )"  (pattern usado pelo Claude Code)
+  // -m "$(cat <<'EOF' ... EOF )" (pattern used by Claude Code)
   const catHeredocMatch = command.match(/cat\s+<<'?EOF'?\s*\n([\s\S]*?)\n\s*EOF/)
   if (catHeredocMatch) return catHeredocMatch[1].trim()
 
@@ -123,10 +193,9 @@ function extractMessage(command) {
 }
 
 function extractGitCDir(command) {
-  // git -C /path/to/repo commit ...
   const match = command.match(/git\s+-C\s+["']?([^\s"']+)["']?\s/)
   if (!match) return null
-  // Converte MSYS2 path (/c/Users/...) para Windows (C:/Users/...)
+  // Convert MSYS2 path (/c/Users/...) to Windows (C:/Users/...)
   return match[1].replace(/^\/([a-zA-Z])\//, '$1:/')
 }
 

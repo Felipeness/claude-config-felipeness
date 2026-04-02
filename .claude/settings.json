@@ -1,36 +1,32 @@
 {
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "MAX_MCP_OUTPUT_TOKENS": "100000"
+    "MAX_MCP_OUTPUT_TOKENS": "100000",
+    "CLAUDE_CODE_NO_FLICKER": "1"
   },
   "includeCoAuthoredBy": false,
   "hooks": {
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\play-notification.ps1"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/validate-commit.js",
+            "command": "node C:/Users/felip/.claude/hooks/pre-bash-guard.js",
             "timeout": 5,
-            "statusMessage": "Validating commit..."
+            "statusMessage": "Pre-bash checks..."
           },
           {
             "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/block-dangerous-commands.sh",
+            "command": "node C:/Users/felip/.claude/hooks/validate-branch-name.js",
             "timeout": 3,
-            "statusMessage": "Security check..."
+            "statusMessage": "Validating branch name..."
+          },
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/aws-profile-check.js",
+            "timeout": 3,
+            "statusMessage": "Checking AWS profile..."
           }
         ]
       }
@@ -44,6 +40,12 @@
             "command": "bash C:/Users/felip/.claude/hooks/typecheck-after-edit.sh",
             "timeout": 30,
             "statusMessage": "Typechecking..."
+          },
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/lint-after-edit.sh",
+            "timeout": 15,
+            "statusMessage": "Linting..."
           }
         ]
       },
@@ -55,6 +57,12 @@
             "command": "node C:/Users/felip/.claude/hooks/mirror-pr-reminder.js",
             "timeout": 5,
             "statusMessage": "Checking mirror PR..."
+          },
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/validate-pr-body.js",
+            "timeout": 5,
+            "statusMessage": "Validating PR body..."
           }
         ]
       }
@@ -96,27 +104,62 @@
           }
         ]
       }
+    ],
+    "TeammateIdle": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/teammate-idle-check.js",
+            "timeout": 5,
+            "statusMessage": "Checking pending tasks..."
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/task-created-validate.js",
+            "timeout": 5,
+            "statusMessage": "Validating task..."
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/task-completed-verify.js",
+            "timeout": 10,
+            "statusMessage": "Verifying completion..."
+          }
+        ]
+      }
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\felip\\.claude\\statusline.ps1"
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": false,
     "commit-commands@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": false,
     "feature-dev@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
-    "playground@claude-plugins-official": true
+    "playground@claude-plugins-official": false
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
@@ -124,5 +167,6 @@
   "includeLineNumbers": true,
   "autoSave": true,
   "preferShorterResponses": false,
-  "includeFileContext": true
+  "includeFileContext": true,
+  "autoDreamEnabled": true
 }
