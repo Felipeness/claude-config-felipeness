@@ -12,21 +12,31 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/pre-bash-guard.js",
-            "timeout": 5,
+            "command": "node C:/Users/felip/.claude/hooks/bash-pre-checks.js",
+            "timeout": 3,
             "statusMessage": "Pre-bash checks..."
-          },
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
           {
             "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/validate-branch-name.js",
-            "timeout": 3,
-            "statusMessage": "Validating branch name..."
-          },
+            "command": "node C:/Users/felip/.claude/hooks/pipeline-precheck.js",
+            "timeout": 5,
+            "statusMessage": "Checking pipeline prerequisites..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
           {
             "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/aws-profile-check.js",
-            "timeout": 3,
-            "statusMessage": "Checking AWS profile..."
+            "command": "node C:/Users/felip/.claude/hooks/enforce-design-first.js",
+            "timeout": 5,
+            "statusMessage": "Checking design-first policy..."
           }
         ]
       }
@@ -37,15 +47,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/typecheck-after-edit.sh",
-            "timeout": 30,
+            "command": "node C:/Users/felip/.claude/hooks/typecheck-after-edit.js",
+            "timeout": 5,
             "statusMessage": "Typechecking..."
           },
           {
             "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/lint-after-edit.sh",
-            "timeout": 15,
+            "command": "node C:/Users/felip/.claude/hooks/lint-after-edit.js",
+            "timeout": 5,
             "statusMessage": "Linting..."
+          },
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/pipeline-gate.js",
+            "timeout": 5,
+            "statusMessage": "Checking pipeline gates..."
           }
         ]
       },
@@ -162,11 +178,11 @@
     "playground@claude-plugins-official": false
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
+  "autoDreamEnabled": true,
   "skipDangerousModePermissionPrompt": true,
   "includeLineNumbers": true,
   "autoSave": true,
   "preferShorterResponses": false,
-  "includeFileContext": true,
-  "autoDreamEnabled": true
+  "includeFileContext": true
 }

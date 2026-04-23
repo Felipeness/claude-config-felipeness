@@ -79,14 +79,21 @@
 │   ├── typescript/           # Standards TypeScript/JS
 │   ├── ultrathink-review/    # Deep review SOLID/DRY/KISS
 │   └── writing/              # Documentacao e commits
-├── hooks/                    # Git/CLI hooks
-│   ├── block-dangerous-commands.sh
-│   ├── cleanup-temp-files.sh
-│   ├── mirror-pr-reminder.js
-│   ├── post-compact-context.sh
-│   ├── ralph-stop-hook.js
-│   ├── typecheck-after-edit.sh
-│   └── validate-commit.js
+├── hooks/                      # Git/CLI hooks (Node-based for Windows-safe spawn)
+│   ├── bash-pre-checks.js       # Dangerous cmds + conventional commits + branch naming + AWS profile
+│   ├── cleanup-temp-files.sh    # SessionEnd cleanup
+│   ├── enforce-design-first.js  # Blocks code edits without a plan in governed projects
+│   ├── lint-after-edit.js       # Biome/ESLint on the edited file only (3s cap)
+│   ├── mirror-pr-reminder.js    # Reminds to cherry-pick PR to develop on echo-atende repos
+│   ├── pipeline-gate.js         # PostToolUse reminder after spec/plan writes
+│   ├── pipeline-precheck.js     # Blocks execution skills without audit + phase-gate
+│   ├── post-compact-context.sh  # Re-inject context after /compact
+│   ├── ralph-stop-hook.js       # Ralph Loop iteration control
+│   ├── task-completed-verify.js # Blocks task completion with untracked files / tsc errors
+│   ├── task-created-validate.js # Min description length on TaskCreated
+│   ├── teammate-idle-check.js   # Keeps teammates working while pending tasks exist
+│   ├── typecheck-after-edit.js  # Incremental tsc --noEmit (3s cap, drive-letter safe)
+│   └── validate-pr-body.js      # Jira link + conventional title + no defensive phrases
 ├── rules/
 │   └── figma-design-system.md # Regras Figma-to-code
 └── teams/
