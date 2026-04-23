@@ -86,7 +86,9 @@ function checkDangerous(command) {
 }
 
 function validateCommit(command) {
-  if (!/git\s+(?:-C\s+\S+\s+)?commit/.test(command)) return;
+  // Only match when `git commit` is the invoked command, not when it appears
+  // inside a heredoc/quoted body (e.g. a PR body or doc string).
+  if (!/(?:^|[;&|\n]|&&|\|\|)\s*git\s+(?:-C\s+\S+\s+)?commit\b/.test(command)) return;
   if (/--amend/.test(command) && !/-m\s/.test(command)) return;
 
   const msg = extractCommitMessage(command);
@@ -228,15 +230,18 @@ function extractGitCDir(command) {
 }
 
 function extractBranchName(command) {
+  // Only match when git is the invoked command (start of line or after a
+  // shell separator), not when it appears inside a quoted body.
   const normalized = command.replace(/git\s+-C\s+["']?[^\s"']+["']?\s+/, 'git ');
+  const cmdStart = /(?:^|[;&|\n]|&&|\|\|)\s*/;
 
-  const checkoutMatch = normalized.match(/git\s+checkout\s+-b\s+["']?([^\s"']+)["']?/);
+  const checkoutMatch = normalized.match(new RegExp(cmdStart.source + /git\s+checkout\s+-b\s+["']?([^\s"']+)["']?/.source));
   if (checkoutMatch) return checkoutMatch[1];
 
-  const switchMatch = normalized.match(/git\s+switch\s+(?:-c|--create)\s+["']?([^\s"']+)["']?/);
+  const switchMatch = normalized.match(new RegExp(cmdStart.source + /git\s+switch\s+(?:-c|--create)\s+["']?([^\s"']+)["']?/.source));
   if (switchMatch) return switchMatch[1];
 
-  const branchMatch = normalized.match(/git\s+branch\s+(?!-[a-zA-Z]|--[a-z])["']?([^\s"']+)["']?/);
+  const branchMatch = normalized.match(new RegExp(cmdStart.source + /git\s+branch\s+(?!-[a-zA-Z]|--[a-z])["']?([^\s"']+)["']?/.source));
   if (branchMatch) return branchMatch[1];
 
   return null;
