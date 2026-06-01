@@ -1,0 +1,9 @@
+[
+  {
+    "from": "team-lead",
+    "text": "Code quality review found 3 issues to fix in dfa.ts:\n\n1. **StateTransition.timestamp**: Change from `Date` to `string` (ISO 8601) — immutability by value. In `transition()`, use `new Date().toISOString()`. Update the test assertion from `toBeInstanceOf(Date)` to `expect(typeof ...).toBe('string')`.\n\n2. **transitionHistory getter**: Return a snapshot copy `return [...this.history]` instead of the live array — prevents runtime mutation of internal state.\n\n3. **SINK_STATES set**: Add `const SINK_STATES = new Set<State>([STATES.ESCALATED, STATES.CANCELLED])` and use it in `isValidTransition` instead of the hardcoded `to === STATES.ESCALATED || to === STATES.CANCELLED` check. Keep `TERMINAL_STATES` as the union of SINK_STATES + COMPLETED.\n\nApply these 3 fixes, re-run tests, and amend the commit.",
+    "summary": "Fix 3 code quality issues in DFA",
+    "timestamp": "2026-03-22T22:09:30.122Z",
+    "read": false
+  }
+]
