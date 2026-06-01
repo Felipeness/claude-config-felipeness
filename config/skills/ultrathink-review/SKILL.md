@@ -1,11 +1,14 @@
 ---
 name: ultrathink-review
 description: Deep code review protocol using SOLID, DRY, KISS, YAGNI, CUPID with Defensive Programming analysis. Use when reviewing code for quality, analyzing pull requests, or auditing codebases for improvements.
+disallowed-tools: Edit, Write, NotebookEdit
 ---
 
 # Ultrathink Code Review
 
 Analise o codigo com base nos padroes SOLID, DRY, KISS, YAGNI, CUPID e boas praticas de Defensive Programming, Early Return e Short-Circuit Evaluation.
+
+> **Para PRs com Jira ticket**, prefira `pr-jira-review` — inclui cross-reference com Jira, ultrathink-review (este skill), e simplify em pipeline de 3 camadas.
 
 ## Checklist de Analise
 

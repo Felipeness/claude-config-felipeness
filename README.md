@@ -8,8 +8,23 @@
 
 ---
 
+## Novidades (Junho 2026)
+
+Afinacao com base no que mudou no Claude Code (v2.1.x) e ganhos de qualidade:
+
+- **Hooks de typecheck/lint com auto-correcao** — em vez de so imprimir no stderr, agora devolvem os erros do `tsc`/linter como `additionalContext` (via `hookSpecificOutput`), entao o modelo corrige na mesma rodada. Continuam nao-bloqueantes.
+- **`ralph-implement` dual-mode** — funciona com card Jira (`CC-1234`) OU descricao livre (sem Jira). No modo freeform, um gate de Definition-of-Done extrai criterios testaveis antes de lancar o loop. Nova fase **review** (`/code-review --fix`) antes do PR. Pipeline: implement → test → perf → docs → review → pr.
+- **Skills read-only blindadas** — `ultrathink-review` e `pre-implementation-audit` usam `disallowed-tools: Edit, Write, NotebookEdit` no frontmatter; read-only deixa de ser confianca e vira garantia.
+- **`pyright-lsp` ativado** — diagnostico de tipos Python em tempo real, par do `typescript-lsp`.
+- **MCP `alwaysLoad`** — servidores usados o tempo todo (ex: `nous`, `atlassian`) carregam sem o round-trip de tool-search.
+- **Timeouts de hook 5s → 10s** — evita falha silenciosa de typecheck/lint em repos grandes.
+- **`cleanup-temp-files.sh` corrigido** — agora varre `~/.claude` (nao so `~`), onde os temp de agente realmente caem.
+
+---
+
 ## Sumario
 
+- [Novidades (Junho 2026)](#novidades-junho-2026)
 - [Estrutura](#estrutura)
 - [Instalacao](#instalacao)
 - [Skills](#skills)
@@ -65,7 +80,7 @@
 │   ├── ralph-cancel/         # Cancelar Ralph Loop
 │   ├── ralph-debug/          # Loop autonomo de debug
 │   ├── ralph-docs/           # Loop autonomo de docs
-│   ├── ralph-implement/      # Loop autonomo Jira → PR
+│   ├── ralph-implement/      # Loop autonomo Jira OU freeform → PR
 │   ├── ralph-migrate/        # Loop autonomo de migracao
 │   ├── ralph-perf/           # Loop autonomo de performance
 │   ├── ralph-refactor/       # Loop autonomo de refactoring
@@ -161,7 +176,7 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 
 | Skill | Descricao | Quando Usar |
 |-------|-----------|-------------|
-| `ralph-implement` | Jira card → implementacao → PR | Implementar card completo |
+| `ralph-implement` | Jira card OU descricao livre → impl (TDD) → test → perf → docs → review → PR | Implementar card OU tarefa sem Jira |
 | `ralph-review` | PR review autonomo com fix loop | Review e correcao automatica |
 | `ralph-refactor` | Refactoring incremental com testes | Refatoracao autonoma |
 | `ralph-test` | TDD loop: testes primeiro | Desenvolvimento test-first |
@@ -680,7 +695,7 @@ MIT License - Use e modifique livremente.
 
 ---
 
-**Criado por FelipeNess** | **Atualizado em 27/03/2026**
+**Criado por FelipeNess** | **Atualizado em 01/06/2026**
 
 > *"Code is reference, history, and functionality - it must be readable as a journal."*
 

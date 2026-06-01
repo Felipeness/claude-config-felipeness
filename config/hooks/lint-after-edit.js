@@ -63,7 +63,17 @@ process.stdin.on('end', () => {
   if (result.status !== 0) {
     const output = (result.stdout || '') + (result.stderr || '');
     const trimmed = output.split('\n').slice(0, 20).join('\n');
-    if (trimmed.trim()) process.stderr.write(trimmed + '\n');
+    if (trimmed.trim()) {
+      // Feed lint errors back to Claude as context (not just stderr) so it self-corrects this turn.
+      process.stdout.write(
+        JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: 'PostToolUse',
+            additionalContext: `${linter.bin} found lint errors after editing ${path.basename(filePath)}:\n\n${trimmed}\n\nFix these before moving on.`,
+          },
+        }),
+      );
+    }
   }
   process.exit(0);
 });
