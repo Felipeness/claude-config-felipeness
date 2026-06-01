@@ -1,51 +1,35 @@
 {
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "MAX_MCP_OUTPUT_TOKENS": "100000",
-    "CLAUDE_CODE_NO_FLICKER": "1"
+    "CLAUDE_CODE_NO_FLICKER": "1",
+    "MAX_MCP_OUTPUT_TOKENS": "100000"
   },
   "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "auto"
+  },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/pre-bash-guard.js",
-            "timeout": 5,
-            "statusMessage": "Pre-bash checks..."
-          },
-          {
-            "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/validate-branch-name.js",
-            "timeout": 3,
-            "statusMessage": "Validating branch name..."
-          },
-          {
-            "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/aws-profile-check.js",
-            "timeout": 3,
-            "statusMessage": "Checking AWS profile..."
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/typecheck-after-edit.sh",
-            "timeout": 30,
+            "command": "node C:/Users/felip/.claude/hooks/typecheck-after-edit.js",
+            "timeout": 10,
             "statusMessage": "Typechecking..."
           },
           {
             "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/lint-after-edit.sh",
-            "timeout": 15,
+            "command": "node C:/Users/felip/.claude/hooks/lint-after-edit.js",
+            "timeout": 10,
             "statusMessage": "Linting..."
+          },
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/pipeline-gate.js",
+            "timeout": 10,
+            "statusMessage": "Checking pipeline gates..."
           }
         ]
       },
@@ -55,14 +39,83 @@
           {
             "type": "command",
             "command": "node C:/Users/felip/.claude/hooks/mirror-pr-reminder.js",
-            "timeout": 5,
+            "timeout": 10,
             "statusMessage": "Checking mirror PR..."
           },
           {
             "type": "command",
             "command": "node C:/Users/felip/.claude/hooks/validate-pr-body.js",
-            "timeout": 5,
+            "timeout": 10,
             "statusMessage": "Validating PR body..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/bash-pre-checks.js",
+            "timeout": 3,
+            "statusMessage": "Pre-bash checks..."
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/pipeline-precheck.js",
+            "timeout": 10,
+            "statusMessage": "Checking pipeline prerequisites..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/enforce-design-first.js",
+            "timeout": 10,
+            "statusMessage": "Checking design-first policy..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/cleanup-temp-files.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/felip/.claude/hooks/post-compact-context.sh",
+            "timeout": 10,
+            "statusMessage": "Re-injecting context..."
           }
         ]
       }
@@ -80,57 +133,6 @@
         ]
       }
     ],
-    "SessionStart": [
-      {
-        "matcher": "compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/post-compact-context.sh",
-            "timeout": 5,
-            "statusMessage": "Re-injecting context..."
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash C:/Users/felip/.claude/hooks/cleanup-temp-files.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "TeammateIdle": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/teammate-idle-check.js",
-            "timeout": 5,
-            "statusMessage": "Checking pending tasks..."
-          }
-        ]
-      }
-    ],
-    "TaskCreated": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node C:/Users/felip/.claude/hooks/task-created-validate.js",
-            "timeout": 5,
-            "statusMessage": "Validating task..."
-          }
-        ]
-      }
-    ],
     "TaskCompleted": [
       {
         "matcher": "",
@@ -143,30 +145,64 @@
           }
         ]
       }
+    ],
+    "TaskCreated": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/task-created-validate.js",
+            "timeout": 10,
+            "statusMessage": "Validating task..."
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/teammate-idle-check.js",
+            "timeout": 10,
+            "statusMessage": "Checking pending tasks..."
+          }
+        ]
+      }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "C:/Users/felip/bin/claude-statusline.exe render"
+  },
   "enabledPlugins": {
-    "gopls-lsp@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": false,
-    "commit-commands@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": false,
+    "commit-commands@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
-    "playground@claude-plugins-official": false
+    "playground@claude-plugins-official": false,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
+  "autoDreamEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "includeLineNumbers": true,
+  "theme": "dark-daltonized",
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
   "autoSave": true,
-  "preferShorterResponses": false,
   "includeFileContext": true,
-  "autoDreamEnabled": true
+  "includeLineNumbers": true,
+  "preferShorterResponses": false
 }
