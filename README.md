@@ -59,7 +59,7 @@ Afinacao com base no que mudou no Claude Code (v2.1.x) e ganhos de qualidade:
 │   ├── investigate.md        # /investigate - Investigar
 │   ├── investigate-batch.md  # /investigate-batch - Investigar (batch)
 │   └── trim.md               # /trim - Reduzir PR description
-├── skills/                   # Skills customizadas (28 skills)
+├── skills/                   # Skills customizadas (30 skills)
 │   ├── api-design/           # REST/webhook API patterns
 │   ├── architecture-patterns/ # CQRS, Event Sourcing, Saga, etc.
 │   ├── code-quality/         # CUPID/SOLID/DRY/KISS/YAGNI
@@ -93,6 +93,7 @@ Afinacao com base no que mudou no Claude Code (v2.1.x) e ganhos de qualidade:
 │   ├── software-engineering/ # Principios core
 │   ├── typescript/           # Standards TypeScript/JS
 │   ├── ultrathink-review/    # Deep review SOLID/DRY/KISS
+│   ├── verificar-entrega/    # Gate antes de abrir PR (runtime, teste, tamanho)
 │   └── writing/              # Documentacao e commits
 ├── hooks/                      # Git/CLI hooks (Node-based for Windows-safe spawn)
 │   ├── bash-pre-checks.js       # Dangerous cmds + conventional commits + branch naming + AWS profile
@@ -171,6 +172,7 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 | `refactoring` | Refatoracao segura e incremental | Aplicando melhorias pos-review |
 | `debugging` | Investigacao estruturada de bugs | Bugs, erros runtime, comportamento inesperado |
 | `mirror-pr` | PR espelho master → develop | Repos com dual-branch (echo-atende) |
+| `verificar-entrega` | Gate antes de abrir PR: paridade de runtime, teste desligado, drift de config, tamanho, sobras | Antes de toda PR e antes de escrever "verificado" |
 
 ### Ralph Loops (Agentes Autonomos)
 
