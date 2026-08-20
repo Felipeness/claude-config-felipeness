@@ -1,6 +1,6 @@
 ---
 name: pr-jira-review
-description: Complete PR review pipeline — cross-references with Jira task, runs ultrathink-review (SOLID/DRY/KISS/YAGNI/CUPID), and simplify (reuse/quality/efficiency). Posts findings inline on GitHub and summary on Jira.
+description: Complete PR review pipeline — cross-references with Jira task, runs ultrathink-review (SOLID/DRY/KISS/YAGNI/CUPID), and simplify (reuse/quality/efficiency). Posts findings inline on GitHub only — never writes to Jira.
 ---
 
 # PR + Jira Cross-Reference Review
@@ -115,67 +115,57 @@ Postar comments **inline** em cada ponto especifico — nunca um comentario unic
 
 Cada finding das 3 fases vira um comment separado no local exato do codigo.
 
-Regras de tom:
-- Educado, gentil, humano — como colega de equipe respondendo naturalmente
-- Referenciar commits pelo **nome/mensagem** (ex: "resolvi no commit `fix: add error guards`"), nunca pelo hash
-- Usar portugues (pt-BR) nos comentarios
+### Como escrever: `code-review-comments` manda
 
-Formato dos comments:
+**Carregue a skill `code-review-comments` antes de escrever o primeiro comentario.** Esta
+skill aqui define O QUE analisar (Fases 1 a 3). Ela define COMO comunicar. Em qualquer
+divergencia de formato, tom ou vocabulario, ela vence.
 
-**Blocking (request changes):**
-```
-Esse trecho pode causar [problema]. Sugiro [alternativa] porque [razao].
+O que isso significa na pratica, porque ja saiu errado:
 
-Referencia: criterio de aceite "[texto do criterio]" do card CC-XXX.
+- **Sem prefixo de categoria.** Nada de `[Jira]`, `[Qualidade]`, `[Simplify]`. Sao labels de
+  template e entregam que foi maquina que escreveu. A procedencia do achado interessa a
+  voce durante a analise, nao a quem le o comentario.
+- **Sem `**Bloqueia:**`, `**Sugestao:**`, `**Impacto:**`.** A severidade sai no peso da
+  frase: "Essa parte me preocupou" para bloqueante, "Vale considerar" para importante,
+  "Nit:" para trivial.
+- **Sem header `###` dentro de comentario inline.** Comentario de review e texto corrido
+  conversacional, nao documento.
+- **Acentuacao impecavel.** Portugues correto, sempre. Sem excecao por causa de shell,
+  encoding ou pressa: use UTF-8 de ponta a ponta (`json.dumps(..., ensure_ascii=False)`,
+  arquivo em UTF-8) em vez de remover acento.
+- **Parcimonia.** Se o ponto cabe em duas linhas, nao escreva cinco.
+- **Referenciar commit pelo nome/mensagem**, nunca pelo hash.
+- **Reconhecer pelo menos uma decisao boa do autor.** Review so com defeito nao e review, e
+  cobranca.
+
+Quando o achado vier de criterio de aceite do Jira, cite o criterio dentro da frase em vez
+de rotular o comentario:
+
+```
+Isso derruba o criterio "usuario recebe confirmacao por email" do CC-1234: o envio so
+acontece no caminho feliz, e o catch mais abaixo engole a falha sem retentar.
 ```
 
-**Non-blocking (sugestao de qualidade/simplificacao):**
-```
-Sugestao: [melhoria]. Nao bloqueia o merge, mas melhora [aspecto].
-```
+### Escolha do evento do review
 
-**Positivo:**
-```
-Ficou otimo aqui — [elogio especifico].
-```
-
-Categorizar cada comment com prefixo:
-- `[Jira]` — relacionado a criterio de aceite
-- `[Qualidade]` — encontrado pelo ultrathink-review
-- `[Simplify]` — encontrado pela analise de simplificacao
+- `REQUEST_CHANGES` quando houver achado que voce nao aceitaria em producao (seguranca,
+  correcao, spec contradita pelo codigo). Diga no summary quais itens motivaram, para nao
+  soar mais pesado do que e.
+- `COMMENT` quando for qualidade, simplificacao e duvida.
+- `APPROVE` so depois de ler o diff inteiro. Aprovacao muda sem comentario nenhum e o que
+  mantem portao de qualidade aberto.
 
 ---
 
-### Fase 5 — Postar resumo no Jira
+### Fase 5 — Resultado final
 
-Escrever o payload do comentario em arquivo temporario e usar browser MCP para postar no Jira:
-
-```
-Review do PR #<numero> (<url>)
-
-Criterios de aceite:
-- [x] Criterio 1 — atendido
-- [x] Criterio 2 — atendido
-- [ ] Criterio 3 — pendente (comentario no PR)
-
-Qualidade (ultrathink):
-- X findings blocking, Y sugestoes
-- Principios: [quais foram violados, se algum]
-
-Simplificacao:
-- [oportunidades encontradas, se alguma]
-
-Status: Aprovado / Aprovado com ressalvas / Requer mudancas
-```
-
----
-
-### Fase 6 — Resultado final
+**Nao postar nada no Jira** — o review vive somente no PR. O Jira e fonte de leitura (criterios de aceite), nunca destino de escrita neste workflow.
 
 Apresentar ao usuario:
 
 1. **Cobertura Jira** — checklist de criterios atendidos/pendentes
 2. **Qualidade** — resumo dos findings do ultrathink (blocking vs non-blocking)
 3. **Simplificacao** — oportunidades de melhoria encontradas
-4. **Acoes** — comments postados no GitHub + resumo no Jira
+4. **Acoes** — comments postados no GitHub
 5. **Veredicto** — Aprovado / Aprovado com ressalvas / Requer mudancas
