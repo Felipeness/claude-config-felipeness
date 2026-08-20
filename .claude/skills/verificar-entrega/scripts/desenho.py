@@ -13,6 +13,9 @@ import sys
 import os
 import subprocess
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lang  # noqa: E402  deteccao de linguagem + parser por linguagem
+
 FAIL, WARN = [], []
 
 
@@ -48,65 +51,27 @@ def linhas_add(path, base):
         return set()
 
 
-def funcoes_py(L):
-    out, cur = [], None
-    for i, l in enumerate(L):
-        m = re.match(r"^(\s*)(?:async )?def (\w+)\((.*)", l)
-        if m:
-            if cur:
-                cur["fim"] = i
-                out.append(cur)
-            cur = {"ini": i, "nome": m.group(2), "sig": m.group(3), "ind": len(m.group(1))}
-    if cur:
-        cur["fim"] = len(L)
-        out.append(cur)
-    return out
-
-
-def funcoes_ts(L):
-    """Delimita cada funcao contando chaves, nao ate a proxima declaracao.
-
-    A versao ingenua ia de uma `function` ate a seguinte, entao num arquivo com
-    poucas declaracoes e muitas arrow functions ela reportava a primeira funcao
-    com o tamanho do arquivo inteiro. Este gate acusou uma funcao de 4 linhas
-    como tendo 60."""
-    out = []
-    pat = re.compile(r"^(\s*)(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\((.*)"
-                     r"|^(\s*)(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?\((.*)")
-    for i, l in enumerate(L):
-        m = pat.match(l)
-        if not m:
-            continue
-        g = m.groups()
-        ind, nome, sig = (g[0], g[1], g[2]) if g[1] else (g[3], g[4], g[5])
-        # Fecha no ponto em que as chaves abertas voltam a zero.
-        saldo, fim, viu = 0, len(L), False
-        for j in range(i, len(L)):
-            linha = re.sub(r"//.*$|'[^']*'|\"[^\"]*\"|`[^`]*`", "", L[j])
-            saldo += linha.count("{") - linha.count("}")
-            if "{" in linha:
-                viu = True
-            if viu and saldo <= 0:
-                fim = j + 1
-                break
-        out.append({"ini": i, "nome": nome, "sig": sig or "", "ind": len(ind or ""), "fim": fim})
-    return out
+# Extracao de funcao mora em lang.py: deteccao de linguagem primeiro, depois o
+# melhor parser que existir (ast do Python, compilador do TypeScript do projeto,
+# tokenizador com mascara de literais como ultimo recurso).
 
 
 # ---------------------------------------------------------------- eixos gerais
-def eixo_forma(path, L, funcs, tab):
+def eixo_forma(path, mascarado_L, funcs):
+    """Tamanho, aninhamento e parametros vem do analisador de `lang`, nao de
+    contagem de indentacao. Indentacao conta continuacao de linha, dict multilinha
+    e chamada encadeada como se fossem aninhamento, e inflava o numero."""
     for f in funcs:
-        corpo = L[f["ini"]:f["fim"]]
-        n = len([x for x in corpo if x.strip() and not x.strip().startswith(("#", "//"))])
-        prof = max([(len(x) - len(x.lstrip())) // tab for x in corpo if x.strip()] or [0]) - f["ind"] // tab
-        np = len([p for p in f["sig"].split(")")[0].split(",")
-                  if p.strip() and p.strip() not in ("self", "cls")])
+        corpo = mascarado_L[f["ini"]:f["fim"]]
+        n = len([x for x in corpo if x.strip()])
         if n > 20:
             atencao(f"funcao com {n} linhas (limite 20)", f"{path}:{f['ini']+1} {f['nome']}")
-        if prof >= 3:
-            atencao(f"aninhamento {prof} (limite 2, extraia funcao)", f"{path}:{f['ini']+1} {f['nome']}")
-        if np > 3:
-            atencao(f"{np} parametros (limite 3, use objeto)", f"{path}:{f['ini']+1} {f['nome']}")
+        if f["nest"] >= 3:
+            atencao(f"aninhamento {f['nest']} (limite 2, extraia funcao)",
+                    f"{path}:{f['ini']+1} {f['nome']}")
+        if f["params"] > 3:
+            atencao(f"{f['params']} parametros (limite 3, use objeto)",
+                    f"{path}:{f['ini']+1} {f['nome']}")
 
 
 def eixo_cqs(path, L, funcs):
@@ -207,9 +172,7 @@ def eixo_exports(path, L, adds):
 def eixo_mutacao_param(path, L, funcs):
     """Mutar parametro recebido quebra a expectativa do chamador."""
     for f in funcs:
-        params = [re.sub(r"[:=].*", "", p).strip().lstrip("*")
-                  for p in f["sig"].split(")")[0].split(",")]
-        params = [p for p in params if re.match(r"^\w+$", p) and p not in ("self", "cls")]
+        params = f.get("nomes_params") or []
         if not params:
             continue
         for idx, l in enumerate(L[f["ini"] + 1:f["fim"]], start=f["ini"] + 1):
@@ -253,8 +216,12 @@ def eixo_nomes(path, L, adds):
 
 # ---------------------------------------------------------------- padroes locais
 # Cada um destes ja custou incidente nesta organizacao.
-def padroes_conhecidos(path, L, adds):
-    src = "\n".join(L)
+def padroes_conhecidos(path, L, codigo):
+    # Zera linha que e so comentario ou literal, senao o detector acusa a propria
+    # documentacao. Ja aconteceu duas vezes: a tabela da SKILL.md que descreve o
+    # detector de debug reprovou o proprio arquivo, e depois o comentario que
+    # explicava a correcao. Falar de uma coisa nao e faze-la.
+    src = "\n".join(l if i in codigo else "" for i, l in enumerate(L))
 
     # 1. listener de postMessage sem checar origem (new-home #3236)
     for m in re.finditer(r"addEventListener\(\s*['\"]message['\"]", src):
@@ -360,47 +327,50 @@ def main():
         return 0
 
     base = os.environ.get("DESENHO_BASE", "origin/master")
+    motores = {}
     for path in paths:
-        ext = "py" if path.endswith(".py") else (
-              "ts" if path.endswith((".ts", ".tsx", ".js", ".jsx", ".mjs")) else
-              "php" if path.endswith((".php", ".phtml")) else None)
-        if ext is None:
-            continue
         try:
-            L = open(path, encoding="utf-8", errors="replace").read().split("\n")
+            fonte = open(path, encoding="utf-8", errors="replace").read()
         except Exception:
             continue
+
+        # Passo 1: qual linguagem. Passo 2: melhor parser que existe pra ela.
+        ling, motor, funcs, mascarado = lang.analisar(path, fonte)
+        if ling in ("desconhecida", "html"):
+            continue
+        motores[path] = f"{ling}/{motor}"
+
+        L = fonte.split("\n")
+        ML = mascarado.split("\n")
+        # Linha cujo conteudo sumiu na mascara era so comentario ou literal.
+        # Os detectores que precisam do fonte cru (procuram texto dentro de string)
+        # usam isso pra nao acusar a propria documentacao.
+        codigo = {i for i, m in enumerate(ML) if m.strip()}
+
         adds = linhas_add(path, base)
-        # Sem contexto git (arquivo novo fora de repo, git indisponivel) o diff vem
-        # vazio e os eixos por linha se calariam. Se o arquivo chegou ate aqui e
-        # porque tem mudanca, entao o fallback e olhar o arquivo inteiro.
+        # Sem contexto git (arquivo novo, fora de repo, git indisponivel) o diff vem
+        # vazio e os eixos por linha se calariam.
         if not adds:
             adds = set(L)
+        adds = {L[i] for i in codigo if L[i] in adds}
 
-        if ext == "py":
-            funcs = funcoes_py(L)
-            eixo_forma(path, L, funcs, 4)
-            eixo_cqs(path, L, funcs)
-            eixo_estado(path, L, "py")
-            eixo_mutacao_param(path, L, funcs)
-            eixo_idempotencia(path, L)
-        elif ext == "ts":
-            funcs = funcoes_ts(L)
-            eixo_forma(path, L, funcs, 2)
-            eixo_cqs(path, L, funcs)
-            eixo_estado(path, L, "ts")
+        eixo_forma(path, ML, funcs)
+        eixo_cqs(path, ML, funcs)
+        eixo_mutacao_param(path, ML, funcs)
+        eixo_idempotencia(path, ML)
+        eixo_bigO(path, ML)
+        eixo_nomes(path, L, adds)
+
+        if ling == "python":
+            eixo_estado(path, ML, "py")
+        elif ling in ("typescript", "javascript"):
+            eixo_estado(path, ML, "ts")
             eixo_tipos(path, L, adds)
-            eixo_nomes(path, L, adds)
             eixo_cast(path, L, adds)
-            eixo_await_sequencial(path, L, funcs)
+            eixo_await_sequencial(path, ML, funcs)
             eixo_exports(path, L, adds)
-            eixo_mutacao_param(path, L, funcs)
-            eixo_idempotencia(path, L)
-        else:
-            eixo_nomes(path, L, adds)
 
-        eixo_bigO(path, L)
-        padroes_conhecidos(path, L, adds)
+        padroes_conhecidos(path, L, codigo)
 
     duplicacao_entre_arquivos(paths)
 

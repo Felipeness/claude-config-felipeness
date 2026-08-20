@@ -51,6 +51,46 @@ que está ok.
 
 Roda via `scripts/desenho.py`, chamado pelo `check.sh`. Só olha o diff, não o legado.
 
+### Como ele lê o código: linguagem primeiro, parser depois
+
+`scripts/lang.py` segue sempre a mesma ordem:
+
+1. **Detecta a linguagem.** Extensão, depois shebang, depois conteúdo. `.phtml` sem `<?`
+   é HTML, não PHP, e sai da análise.
+2. **Escolhe o motor mais preciso que existir**, e registra qual usou:
+
+| Linguagem | Motor | Disponibilidade |
+|---|---|---|
+| Python | `ast` da stdlib | sempre |
+| TypeScript, JavaScript | compilador do TypeScript **do projeto analisado** | quando há `node_modules/typescript` subindo a partir do arquivo |
+| resto, e TS sem a lib | tokenizador com máscara de literais | sempre |
+
+3. **Mascara os literais** antes de qualquer contagem. Uma máquina de estados por
+   caractere apaga comentário de linha e de bloco, string com escape, template literal
+   com `${}` aninhado, regex de JS e heredoc de PHP, preservando linhas e colunas.
+
+Sem isso, chave dentro de string conta igual a chave de bloco. Num teste, um trecho com
+5 `{` no fonte tinha só 1 real; os outros 4 estavam em regex, string, template e
+comentário.
+
+**A máscara também serve de filtro de comentário.** Linha cujo conteúdo sumiu na máscara
+era comentário ou literal, e os detectores que precisam do fonte cru (os que procuram
+texto dentro de string) a ignoram. É isso que impede o gate de reprovar a própria
+documentação.
+
+### Por que não medir aninhamento por indentação
+
+Indentação conta continuação de linha, dict multilinha e chamada encadeada como se fossem
+aninhamento. Medindo o `b2b/auth/policies.py` do gateway:
+
+| Método | Funções | > 20 linhas | nesting ≥ 3 |
+|---|---|---|---|
+| indentação | 45 | 22 | **34** |
+| `python-ast` | 45 | 20 | **7** |
+
+O 34 era artefato. O número real de funções com aninhamento de controle de fluxo ≥ 3 é 7.
+Qualquer relatório que tenha usado o primeiro número está errado nesse ponto.
+
 **Forma.** Função acima de 20 linhas, aninhamento ≥ 3, mais de 3 parâmetros.
 
 **Tipos.** `any`, `!` non-null, `as X` forçado (`as const`, `as unknown` e `as Error` passam).
