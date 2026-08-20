@@ -147,7 +147,14 @@ echo
 
 # ---------------------------------------------------------------- 5. SOBRAS
 echo "[5] SOBRAS"
-DBG=$(echo "$FILES" | while read -r f; do [ -f "$f" ] && grep -nE 'debug:\s*true|DEBUG\s*=\s*true' "$f" | sed "s|^|$f:|"; done || true)
+# Documentacao e comentario que DESCREVEM o detector nao sao o defeito. Este gate
+# ja se reprovou duas vezes: primeiro por uma tabela na propria SKILL.md, depois
+# pelo comentario que explicava a correcao. Falar de uma coisa nao e faze-la.
+NAODOC=$(echo "$FILES" | grep -vE '\.(md|mdx|txt|rst)$' || true)
+DBG=$(echo "$NAODOC" | while read -r f; do
+        [ -f "$f" ] && grep -nE 'debug:[[:space:]]*true|DEBUG[[:space:]]*=[[:space:]]*true' "$f" \
+          | grep -vE '^[0-9]+:[[:space:]]*(#|//|\*|--)' | sed "s|^|$f:|"
+      done || true)
 [ -n "$DBG" ] && { fail "debug ligado:"; echo "$DBG" | head -5 | sed 's/^/            /'; }
 
 CLOG=$(echo "$CODE" | while read -r f; do [ -f "$f" ] && diff_added "$f" | grep -nE 'console\.(log|debug)' | sed "s|^|$f:|"; done || true)
@@ -177,6 +184,27 @@ SEC=$(echo "$PRODF" | while read -r f; do
       done | head -5 || true)
 [ -n "$SEC" ] && { fail "possivel credencial em arquivo de producao:"; echo "$SEC" | sed 's/^/            /'; }
 [ -z "$SEC" ] && ok "nada aparente em arquivo de producao"
+echo
+
+# ---------------------------------------------------------------- 7. DESENHO
+echo "[7] DESENHO"
+DESENHO="$(dirname "${BASH_SOURCE[0]}")/desenho.py"
+PY=$(command -v python3 || command -v python || true)
+if [ -z "$PY" ]; then
+  warn "python nao encontrado, fase de desenho pulada"
+elif [ ! -f "$DESENHO" ]; then
+  warn "desenho.py nao encontrado ao lado do check.sh"
+else
+  ALVOS=$(echo "$FILES" | grep -E '\.(py|ts|tsx|js|jsx|mjs|php|phtml)$' | grep -vE '\.(test|spec)\.' || true)
+  if [ -z "$ALVOS" ]; then
+    ok "nenhum arquivo de codigo no diff"
+  else
+    OUT=$(DESENHO_BASE="$MERGE_BASE" "$PY" "$DESENHO" $ALVOS 2>&1)
+    echo "$OUT" | sed 's/^  FALHOU/\x1b[31m  FALHOU\x1b[0m/; s/^  ATENCAO/\x1b[33m  ATENCAO\x1b[0m/; s/^  ok/\x1b[32m  ok\x1b[0m/'
+    echo "$OUT" | grep -q "FALHOU" && FAIL=1
+    echo "$OUT" | grep -q "ATENCAO" && WARN=1
+  fi
+fi
 echo
 
 # ---------------------------------------------------------------- resultado

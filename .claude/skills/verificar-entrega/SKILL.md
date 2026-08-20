@@ -1,6 +1,6 @@
 ---
 name: verificar-entrega
-description: Gate antes de abrir PR. Roda os detectores mecânicos (paridade de runtime, teste desligado, drift de config, tamanho, sobras de debug) e aplica os checklists de julgamento (auth/permissão, fatiamento de migração). Use sempre antes de abrir PR, antes de escrever "verificado/testado" em qualquer descrição, e ao decidir como fatiar um trabalho grande. Também cobre higiene de backlog de PRs abertas.
+description: Gate antes de abrir PR, em duas camadas. Verificação (paridade de runtime, teste desligado, drift de config, tamanho, sobras, segredo) e desenho (CQS, Big-O, estado mutável, tipos, nomeação, e padrões que já causaram incidente: token devolvido por endpoint, postMessage sem origin, echo PHP em literal JS, flag órfã, arquivos irmãos duplicados). Use sempre antes de abrir PR, antes de escrever "verificado/testado/validado" em qualquer descrição, ao decidir como fatiar um trabalho grande, e na higiene semanal de PRs abertas.
 ---
 
 # Verificar entrega
@@ -42,9 +42,68 @@ O script é o gate. Ele reporta seis blocos:
 | TAMANHO | diff acima de 400 linhas ou 20 arquivos | PR grande não é revisada, envelhece, conflita e morre |
 | SOBRAS | `debug: true`, `console.log`, `TODO`, plano de execução commitado | `debug: true` em datasource de produção custa event loop a 200k req/h |
 | SEGREDO | credencial aparente no diff | óbvio |
+| DESENHO | CQS, Big-O, estado mutável, tipos, nomeação, e sete padrões que já viraram incidente aqui | verificação não pega desenho ruim; ver Fase 1.1 |
 
 Saída `FALHOU` bloqueia a PR. Saída `ATENÇÃO` exige uma frase na descrição explicando por
 que está ok.
+
+## Fase 1.1 — O bloco DESENHO
+
+Roda via `scripts/desenho.py`, chamado pelo `check.sh`. Só olha o diff, não o legado.
+
+**Forma.** Função acima de 20 linhas, aninhamento ≥ 3, mais de 3 parâmetros.
+
+**Tipos.** `any`, `!` non-null, `as X` forçado (`as const`, `as unknown` e `as Error` passam).
+
+**Imutabilidade.** Mutação de parâmetro recebido (`param.push`, `param.campo =`), e
+reatribuição no-op depois de mutar in place (`perm["apps"] = apps` logo após um `append`).
+
+**Estado.** `global` e estado mutável de módulo.
+
+**Big-O.** `await` dentro de laço, e três ou mais `await` independentes em sequência que
+caberiam num `Promise.all`. Awaits encadeados, em que um usa o resultado do anterior, são
+ignorados de propósito.
+
+**Idempotência.** Handler `POST`/`PUT` que insere sem nenhuma guarda contra reenvio: sem
+chave de idempotência, sem constraint única, sem `ON CONFLICT`, sem lock. Sai como aviso e
+não como falha, porque nem toda escrita precisa, mas quem decide isso é uma pessoa.
+
+**Nomeação e organização.** Variável de 1 ou 2 caracteres fora de laço, número mágico,
+`export default` e import de barrel file.
+
+**CQS.** Função com nome de query (`get`, `list`, `find`, `fetch`, `is`, `has`, `resolve`)
+executando escrita. Isso é `FALHOU`, não aviso: `get_permissions` fazendo cinco escritas de
+cache é o motivo de ninguém conseguir prever o efeito colateral de uma função chamada "get".
+
+**Sete padrões locais.** Cada um custou um incidente real, e é isso que separa este gate de
+um linter genérico:
+
+| Padrão | De onde veio |
+|---|---|
+| Listener de `message` sem checar `event.origin` | new-home #3236, mergeado com o buraco aberto |
+| `postMessage` com `targetOrigin: '*'` | mesma família |
+| Endpoint devolvendo o bearer do próprio chamador | new-home `GET /token`, 23h em produção |
+| Literal sensível montado por `join` | `['Bearer',' '].join('')`, evasão de detector |
+| Valor PHP em literal JS por `echo` cru | cloud #45028 |
+| `jwt.decode` sem verificar assinatura | ATN-261, token revogado seguia válido |
+| Allowlist hardcoded | `SYSTEM_ACCESS_USERS` divergiu entre b2b e b2c, interseção de 3 |
+
+Mais dois estruturais: **flag escrita e nunca lida** no repositório (o
+`public_internal_only` que prometia uma garantia que o código não implementava) e
+**arquivos irmãos com 60%+ de linhas idênticas no mesmo diff** (as duas páginas do new-home,
+editadas em paralelo com patch idêntico em 8 PRs seguidas sem ninguém apontar).
+
+### Calibração
+
+A regra de token exige registro de rota **mais** leitura de `authorization` **mais** corpo
+de resposta carregando o token, e ignora respostas com `error`/`message`. Sem isso todo
+middleware de auth que devolve `401 {error: 'No token'}` viraria falso positivo.
+
+`!` só é checado em `.ts`/`.tsx`, e comentários são ignorados em todos os eixos de linha.
+JavaScript não tem non-null assertion, e `// janela baixa!)` não é código.
+
+**Um gate que grita errado é um gate que ninguém lê.** Se aparecer falso positivo, aperte a
+regra no `desenho.py` e rode a bateria antes de commitar. Ela vive no fim deste arquivo.
 
 ### Se o RUNTIME não tiver como ser detectado
 
@@ -181,10 +240,43 @@ recente, e a que fica referencia as outras.
 
 ---
 
+## Bateria de regressão dos detectores
+
+Antes de mexer no `desenho.py`, garanta que estes sete continuam com o resultado esperado.
+Os fixtures são o código real dos incidentes.
+
+| # | Caso | Esperado |
+|---|---|---|
+| 1 | handler `GET /token` devolvendo `c.json({ jwt })` | 1 FALHOU |
+| 2 | middleware de auth devolvendo `401 {error:'No token'}` | 0 (falso positivo) |
+| 3 | comentário JS com `janela baixa!)` | 0 (falso positivo) |
+| 4 | `['Bearer',' '].join('')` | 1 FALHOU |
+| 5 | `addEventListener('message')` sem `event.origin` | 1 FALHOU |
+| 6 | `var L = '<?php echo ... ?>'` | 1 FALHOU |
+| 7 | dois arquivos com 90%+ de linhas iguais | 1 FALHOU |
+| 8 | `as Usuario` | 1 ATENÇÃO |
+| 9 | `as const`, `as Error`, `as unknown` | 0 (falso positivo) |
+| 10 | 3 awaits independentes seguidos | 1 ATENÇÃO |
+| 11 | 3 awaits encadeados (um usa o anterior) | 0 (falso positivo) |
+| 12 | `param.push(...)` e `param.campo = ...` | 1 ATENÇÃO cada |
+| 13 | `POST` que insere sem guarda de reenvio | 1 ATENÇÃO |
+| 14 | arquivo limpo do `src/features` | 0 FALHOU |
+
+Os casos 2, 3, 9, 11 e 14 são negativos, e existem porque eu já quebrei cada um deles. A
+primeira regra de token casava com qualquer middleware que lesse `authorization`; a de `!`
+casava com prosa em português; e uma versão dos eixos por linha ficava muda quando não havia
+contexto git, porque `adds` vinha vazio e eu pulava tudo. **Toda regra nova precisa de um
+caso negativo junto.**
+
 ## O que esta skill NÃO faz
 
 Não substitui review humano e não tenta. O objetivo é que o revisor gaste o tempo dele em
-design e regra de negócio, não em achar `??` num Node 12 e `expect` comentado.
+regra de negócio e arquitetura, não em achar `??` num Node 12, `expect` comentado ou uma
+função de 107 linhas.
+
+E ela não decide arquitetura. Nenhum script detecta que existem dois `auth/policies.py` com
+semânticas divergentes, ou que um mecanismo inteiro de JWT não precisava existir. Isso sai
+com alguém decidindo, e é exatamente o tempo que este gate libera.
 
 Se o `check.sh` está limpo e o checklist da Fase 2 foi respondido, a PR está pronta para
 alguém pensar em cima dela. Antes disso, não está.
