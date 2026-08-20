@@ -93,7 +93,7 @@ Afinacao com base no que mudou no Claude Code (v2.1.x) e ganhos de qualidade:
 │   ├── software-engineering/ # Principios core
 │   ├── typescript/           # Standards TypeScript/JS
 │   ├── ultrathink-review/    # Deep review SOLID/DRY/KISS
-│   ├── verificar-entrega/    # Gate antes de abrir PR (runtime, teste, tamanho)
+│   ├── verificar-entrega/    # Gate antes de abrir PR: verificacao + desenho
 │   └── writing/              # Documentacao e commits
 ├── hooks/                      # Git/CLI hooks (Node-based for Windows-safe spawn)
 │   ├── bash-pre-checks.js       # Dangerous cmds + conventional commits + branch naming + AWS profile
@@ -104,7 +104,9 @@ Afinacao com base no que mudou no Claude Code (v2.1.x) e ganhos de qualidade:
 │   ├── pipeline-gate.js         # PostToolUse reminder after spec/plan writes
 │   ├── pipeline-precheck.js     # Blocks execution skills without audit + phase-gate
 │   ├── post-compact-context.sh  # Re-inject context after /compact
+│   ├── pre-pr-gate.js           # Bloqueia `gh pr create` se o gate verificar-entrega falhar
 │   ├── ralph-stop-hook.js       # Ralph Loop iteration control
+│   ├── skills-obrigatorias.js   # Injeta as skills exigidas conforme a intencao do prompt
 │   ├── task-completed-verify.js # Blocks task completion with untracked files / tsc errors
 │   ├── task-created-validate.js # Min description length on TaskCreated
 │   ├── teammate-idle-check.js   # Keeps teammates working while pending tasks exist
@@ -172,7 +174,7 @@ Skills sao regras carregadas sob demanda para economizar tokens. O Claude Code c
 | `refactoring` | Refatoracao segura e incremental | Aplicando melhorias pos-review |
 | `debugging` | Investigacao estruturada de bugs | Bugs, erros runtime, comportamento inesperado |
 | `mirror-pr` | PR espelho master → develop | Repos com dual-branch (echo-atende) |
-| `verificar-entrega` | Gate antes de abrir PR: paridade de runtime, teste desligado, drift de config, tamanho, sobras | Antes de toda PR e antes de escrever "verificado" |
+| `verificar-entrega` | Gate em duas camadas: verificacao (runtime, teste desligado, drift, tamanho, sobras, segredo) e desenho (CQS, Big-O, imutabilidade, idempotencia, tipos, nomeacao) | Antes de toda PR e antes de escrever "verificado" |
 
 ### Ralph Loops (Agentes Autonomos)
 
