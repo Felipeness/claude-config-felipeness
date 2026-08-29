@@ -44,6 +44,61 @@ Formato: `type(scope): descricao em minuscula`
 - Vanilla Claude Code with well-defined tasks outperforms complex fragmented workflows
 - MCP strategy: Research (Context7/DeepWiki) → Debug (Playwright/Chrome) → Document (Excalidraw)
 
+## Superpowers Integration
+
+Superpowers (brainstorming, writing-plans, subagent-driven-development) é o motor de processo.
+Skills customizadas (typescript, nestjs, code-quality, ralph-*) são domínio e implementação.
+Não competem — se complementam.
+
+### Calibração por complexidade (enforced by hook)
+
+| Complexidade | Workflow | Exemplo |
+|---|---|---|
+| **Trivial** (< 5 min) | Direto, sem ceremony | fix typo, update config, one-liner |
+| **Simples** (5-30 min) | Plan mode + skill de domínio | bug fix pontual, small refactor |
+| **Moderada** (30min-2h) | brainstorming → writing-plans → execution | nova feature, migration |
+| **Complexa** (2h+) | Full pipeline com gates | sistema novo, redesign, multi-service |
+
+### Routing: processo vs domínio
+
+**Processo (superpowers — QUANDO e COMO):**
+- `brainstorming` → definir O QUE construir
+- `writing-plans` → quebrar em tasks executáveis
+- `subagent-driven-development` → executar o plano
+- `verification-before-completion` → confirmar que funciona
+- `finishing-a-development-branch` → decidir merge/PR
+
+**Domínio (custom skills — O QUE aplicar):**
+- Código: `typescript` | `go` | `react` | `nestjs` | `functional-programming`
+- Qualidade: `code-quality` | `ultrathink-review` | `refactoring`
+- Arquitetura: `architecture-patterns` | `holonomic-systems` | `api-design`
+- Revisão: `pr-jira-review` | `code-review-comments`
+- Loops autônomos: `ralph-*` (já incluem planning interno)
+
+### Preferência quando há overlap
+- Debugging: `ralph-debug` > `systematic-debugging` (Ralph é autônomo, loopa até resolver)
+- TDD: `ralph-test` > `test-driven-development` (Ralph loopa até cobertura)
+- Code review: `ultrathink-review` + `pr-jira-review` > `requesting-code-review` (mais profundo, com Jira)
+- Planning: `brainstorming` + `writing-plans` = usar sempre para features moderadas+ (são o core do pipeline)
+
+### Regra do dispatcher
+- Perguntas factuais, Q&A, conversas casuais → responder direto, sem invocar skills
+- Tasks de implementação → calibrar pela tabela de complexidade acima
+- Ralph loops → já encapsulam o processo, não precisam de brainstorming externo
+- Nunca invocar skill "por precaução" em tasks triviais — overhead > benefício
+- **`code-quality` é OBRIGATÓRIA em toda implementação que vira commit ou PR** (incluindo briefs de agentes), sem o usuário pedir. Seus princípios prevalecem sobre precedente local em código NOVO: "seguir o vizinho" vale para formatação e idioma, nunca para princípio (estado global mutável, CQS, erros engolidos, aninhamento). Conflito entre princípio e precedente → aplicar o princípio e sinalizar o conflito, nunca resolver em silêncio pró-precedente
+
+## Roteamento de modelos para subagentes (economia de cota)
+
+Default configurado: subagente sem `model` explícito roda **Sonnet 5** (via `CLAUDE_CODE_SUBAGENT_MODEL`). Ao despachar qualquer agente (Agent tool, teams, loops ralph, workflows), escolher o `model` pelo custo real da tarefa — nunca deixar herdar Opus/Fable por omissão:
+
+- **`haiku`** — mecânico e sem julgamento: commit/push, mover ou renomear arquivo, rodar comando e reportar output, checagem de status, formatação
+- **`sonnet`** (default — basta omitir `model`) — trabalho padrão: exploração de código, implementação de task bem definida, testes, docs, review de diff pequeno
+- **`opus`** — complexo: debugging difícil, refactor multi-arquivo, review profundo, design de uma feature
+- **`fable`** — só quando raciocínio é o gargalo: arquitetura de sistema, problema em que o opus falhou, auditoria crítica
+- **Escalar, não começar caro**: se o agente barato falhar ou devolver resultado fraco, re-despachar a mesma task um tier acima — sai mais barato que abrir no caro
+- Forks herdam o modelo principal e não dá pra baratear — preferir agente fresh com prompt bem especificado quando a task não precisa do contexto inteiro da conversa
+
 ## Preferências de código (agnóstico de linguagem — TS, Go, Python)
 
 ### Meta-regra
@@ -146,6 +201,27 @@ Formato: `type(scope): descricao em minuscula`
 - Property-based testing (`@fast-check/vitest`) para invariantes de negócio (financial calcs, serialization roundtrips)
 - Testcontainers para DB real em tests de integração — zero shared state
 
+## Pipeline Gates (enforced by hooks)
+
+O pipeline de design-to-implementation tem gates automaticos. Hooks bloqueiam progressao se gates nao forem cumpridos.
+
+### Fluxo completo
+```
+/constitution (1x por projeto) → brainstorming → /phase-gate (Post-Spec) → writing-plans → /pre-implementation-audit → /phase-gate (Post-Plan) → execution
+```
+
+### Regras
+- **Constitution**: criar antes ou durante primeiro brainstorming de um projeto. Se `docs/superpowers/constitution.md` nao existe, hook lembra. Define principios nao-negociaveis do projeto
+- **Phase Gate (Post-Spec)**: apos brainstorming escrever spec, DEVE rodar `/phase-gate` antes de `writing-plans`. Hook bloqueia `writing-plans` se gate nao existe. Valida: sem tech leaks no spec, clarification coverage, constitution compliance
+- **Pre-Implementation Audit**: apos `writing-plans`, DEVE rodar `/pre-implementation-audit` antes de execution. Cruza spec vs plan: forward traceability (req → task), reverse traceability (task → req), constitution compliance
+- **Phase Gate (Post-Plan)**: apos audit, DEVE rodar `/phase-gate` antes de `subagent-driven-development`/`executing-plans`. Hook bloqueia execution se gate ou audit nao existe
+- Artefatos salvos em: `docs/superpowers/gates/`, `docs/superpowers/audits/`, `docs/superpowers/constitution.md`
+
+### Skills de governanca
+- `constitution` — governança per-project (principios, forbidden patterns, quality priorities)
+- `phase-gate` — checklists formais entre fases (auto-validados onde possivel)
+- `pre-implementation-audit` — analise read-only de consistencia cross-artifact
+
 ## Important Concepts
 Focus on these principles in all code:
 - e2e type-safety
@@ -160,5 +236,8 @@ Detailed guidelines are in skills (use the most specific one for the task):
 - Quality: `ultrathink-review` (deep audit) | `pr-jira-review` (PR + Jira) | `refactoring` (safe improvements)
 - Operations: `observability` (logging/tracing) | `debugging` (structured investigation) | `planning` (architecture decisions)
 - Design: `figma-to-code` (pixel-perfect Figma pipeline) | `frontend-design` (UI from scratch)
+- Governance: `constitution` (project principles) | `phase-gate` (phase checklists) | `pre-implementation-audit` (cross-artifact consistency)
 - Loops: `ralph-implement` (card Jira) | `ralph-review` (PR) | `ralph-refactor` (refactoring) | `ralph-cancel` (parar) | `ralph-debug` (bugs) | `ralph-test` (TDD) | `ralph-migrate` (migrations) | `ralph-perf` (performance) | `ralph-docs` (documentação)
 - Communication: `code-review-comments` (tom de review)
+
+@RTK.md

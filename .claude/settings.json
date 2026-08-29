@@ -2,6 +2,7 @@
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "CLAUDE_CODE_NO_FLICKER": "1",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
     "MAX_MCP_OUTPUT_TOKENS": "100000"
   },
   "includeCoAuthoredBy": false,
@@ -52,6 +53,17 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/guard-fork-dispatch.js",
+            "timeout": 5,
+            "statusMessage": "Checando roteamento de subagente..."
+          }
+        ]
+      },
       {
         "matcher": "Bash",
         "hooks": [
