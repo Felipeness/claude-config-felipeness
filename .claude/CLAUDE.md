@@ -99,6 +99,27 @@ Default configurado: subagente sem `model` explícito roda **Sonnet 5** (via `CL
 - **Escalar, não começar caro**: se o agente barato falhar ou devolver resultado fraco, re-despachar a mesma task um tier acima — sai mais barato que abrir no caro
 - Forks herdam o modelo principal e não dá pra baratear — preferir agente fresh com prompt bem especificado quando a task não precisa do contexto inteiro da conversa
 
+## Skills obrigatórias por tema (briefs de agentes incluídos)
+
+Todo despacho de agente com tarefa de código DEVE instruir no prompt as skills do tema. Mínimo universal para código, não importa a tarefa: **`code-quality` + skill da linguagem**. Hook nega despacho de código sem `code-quality` no brief. Antes de despachar, conferir o mapa e incluir o que casar:
+
+| Tema | Skills obrigatórias |
+|---|---|
+| Código (implementar, corrigir, refatorar) — sempre | `code-quality` + linguagem (`typescript` / `go` / `react` / `nestjs`) |
+| Regra de negócio pura / FP | + `functional-programming` |
+| UI nova ou retrabalho visual | + `frontend-design` |
+| API, endpoint, webhook | + `api-design` |
+| Review de código/PR | `ultrathink-review` + `code-review-comments` (+ `pr-jira-review` com card) |
+| Abrir PR, commitar, dizer "verificado" | `verificar-entrega` + `escrita-felipe` |
+| Texto em nome do Felipe (Slack, Jira, PR, resposta de review) | `escrita-felipe` |
+| Debug | `debugging` pontual, `ralph-debug` autônomo |
+| Refactor dedicado | `refactoring` |
+| Arquitetura / design de sistema | `architecture-patterns` (+ `holonomic-systems` se SCS) |
+| Logging, tracing, alerting | `observability` |
+| Migration / perf / TDD em loop | `ralph-migrate` / `ralph-perf` / `ralph-test` |
+| README / documentação de projeto | `readme` |
+| Planilha / doc / apresentação | `excel-xlsx` / `word-docx` / `powerpoint-pptx` |
+
 ## Preferências de código (agnóstico de linguagem — TS, Go, Python)
 
 ### Meta-regra

@@ -61,6 +61,12 @@
             "command": "node C:/Users/felip/.claude/hooks/guard-fork-dispatch.js",
             "timeout": 5,
             "statusMessage": "Checando roteamento de subagente..."
+          },
+          {
+            "type": "command",
+            "command": "node C:/Users/felip/.claude/hooks/guard-skills-dispatch.js",
+            "timeout": 5,
+            "statusMessage": "Checando skills obrigatorias do brief..."
           }
         ]
       },
