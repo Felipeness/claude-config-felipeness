@@ -8,6 +8,12 @@ argument-hint: [feature description]
 Plan and implement a new feature: $ARGUMENTS
 
 ## Approach:
+0. **Branch Creation**
+   ```bash
+   git checkout main && git pull
+   git checkout -b feat/<feature-name>   # ou feat/TICKET-desc se houver Jira
+   ```
+
 1. **Research & Analysis**
    - Analyze existing codebase architecture and patterns
    - Identify dependencies and integration points
@@ -49,5 +55,10 @@ Plan and implement a new feature: $ARGUMENTS
    - Verify no breaking changes
    - Ensure error boundaries with retry buttons (React)
    - Validate accessibility compliance
+
+8. **Stage Changes**
+   ```bash
+   git add -A   # deixar staged para review antes do commit
+   ```
 
 Focus on clear, observable, secure, accessible, and performant code that follows established patterns.

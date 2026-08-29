@@ -105,7 +105,7 @@ else
   SLEEP=$(echo "$TESTS" | while read -r f; do [ -f "$f" ] && grep -nE 'new Promise\(.*setTimeout|await .*setTimeout\(' "$f" | sed "s|^|$f:|"; done || true)
   [ -n "$SLEEP" ] && { warn "espera por setTimeout em teste (falso positivo sob carga; use vi.waitFor/waitFor):"; echo "$SLEEP" | head -5 | sed 's/^/            /'; }
 
-  NOEXP=$(echo "$TESTS" | while read -r f; do [ -f "$f" ] && [ "$(grep -cE '\b(expect|assert)\(' "$f")" = "0" ] && echo "$f"; done || true)
+  NOEXP=$(echo "$TESTS" | while read -r f; do [ -f "$f" ] && [ "$(grep -cE '\b(expect|assert)[.(]' "$f")" = "0" ] && echo "$f"; done || true)
   [ -n "$NOEXP" ] && { fail "arquivo de teste sem nenhum expect/assert:"; echo "$NOEXP" | sed 's/^/            /'; }
 
   PATCH=$(echo "$TESTS" | while read -r f; do [ -f "$f" ] && grep -lE 'Module\.prototype\.require|process\.env\.[A-Z_]+\s*=' "$f" | while read -r g; do grep -qE 'afterAll|afterEach' "$g" || echo "$g"; done; done || true)

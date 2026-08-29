@@ -25,6 +25,46 @@ function saida(obj) {
 
 let bruto = ''
 process.stdin.on('data', (c) => (bruto += c))
+/**
+ * Diretorio em que o comando vai rodar de verdade.
+ *
+ * O gate roda `check.sh`, que le o git do diretorio corrente. Sem isso, um
+ * `cd outro-repo && ...` era medido contra o repo da sessao: a contagem de
+ * commits vinha do repo errado e o gate reprovava PR legitima ("acima de 50
+ * commits" numa branch de 1 commit).
+ */
+function cwdDoComando(cmd) {
+  const criacao = cmd.search(/\bgh\s+pr\s+create\b/)
+  const antes = criacao < 0 ? cmd : cmd.slice(0, criacao)
+  // separador antes do `cd`: inicio, operador de shell, ou qualquer espaco
+  // (inclui quebra de linha, que e o caso de heredoc seguido de cd)
+  const padrao = /(?:^|[\s&|;])\s*cd\s+(?:"([^"]+)"|'([^']+)'|([^\s&|;]+))/g
+  const alvos = []
+  for (const m of antes.matchAll(padrao)) alvos.push(m[1] || m[2] || m[3])
+  // o ultimo `cd` antes do comando e o diretorio em que ele roda de fato
+  for (const alvo of alvos.reverse()) {
+    for (const candidato of [paraWindows(alvo), alvo]) {
+      try {
+        if (fs.statSync(candidato).isDirectory()) return candidato
+      } catch {
+        // tenta a proxima forma do caminho
+      }
+    }
+  }
+  return process.cwd()
+}
+
+/**
+ * Git Bash entrega `/c/Users/...`, que o fs do Node no Windows nao resolve.
+ * Sem esta traducao o gate caia no fallback e voltava a medir o repo errado.
+ */
+function paraWindows(p) {
+  const m = /^\/([a-zA-Z])\/(.*)$/.exec(p)
+  if (!m) return p
+  const BARRA = String.fromCharCode(92)
+  return m[1].toUpperCase() + ':' + BARRA + m[2].split('/').join(BARRA)
+}
+
 process.stdin.on('end', () => {
   const evento = ler(bruto)
   const cmd = evento?.tool_input?.command || ''
@@ -42,6 +82,7 @@ process.stdin.on('end', () => {
   let falhou = false
   try {
     stdout = execFileSync('bash', [CHECK], {
+      cwd: cwdDoComando(cmd),
       encoding: 'utf8',
       timeout: 120000,
       maxBuffer: 10 * 1024 * 1024,

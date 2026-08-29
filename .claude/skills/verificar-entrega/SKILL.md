@@ -98,7 +98,12 @@ Qualquer relatório que tenha usado o primeiro número está errado nesse ponto.
 **Imutabilidade.** Mutação de parâmetro recebido (`param.push`, `param.campo =`), e
 reatribuição no-op depois de mutar in place (`perm["apps"] = apps` logo após um `append`).
 
-**Estado.** `global` e estado mutável de módulo.
+**Estado.** `global` e estado mutável de módulo. Em JS/TS, linha adicionada que atribui
+propriedade custom em `window` (`window.__flag = true`, `window['flag'] = 1`, incluindo
+`+=` e afins) sai como ATENÇÃO — escrita nativa passa (`location`, `name`, `status`,
+`opener` e handlers `on*`), e só o primeiro nível acusa, porque o `window.x` de um
+`window.x.y =` já foi acusado onde nasceu. Veio do cloud `63a475c`, a flag
+`__gerarremessaPjbankHandlersRegistrados` que o gate deixou passar.
 
 **Big-O.** `await` dentro de laço, e três ou mais `await` independentes em sequência que
 caberiam num `Promise.all`. Awaits encadeados, em que um usa o resultado do anterior, são
@@ -130,8 +135,12 @@ um linter genérico:
 
 Mais dois estruturais: **flag escrita e nunca lida** no repositório (o
 `public_internal_only` que prometia uma garantia que o código não implementava) e
-**arquivos irmãos com 60%+ de linhas idênticas no mesmo diff** (as duas páginas do new-home,
-editadas em paralelo com patch idêntico em 8 PRs seguidas sem ninguém apontar).
+**arquivos irmãos com 60%+ de linhas idênticas no mesmo diff, quando o diff introduz ou
+aumenta essa semelhança** (as duas páginas do new-home, editadas em paralelo com patch
+idêntico em 8 PRs seguidas sem ninguém apontar). O par também é medido na base do diff:
+gêmeos que já nasceram assim, como piatendimento/seguros, recebendo patch paralelo com
+similaridade estável não reportam nada — a folga é o maior entre 2 pontos percentuais e
+2 linhas comuns líquidas no lado menor do par.
 
 ### Calibração
 
@@ -141,6 +150,11 @@ middleware de auth que devolve `401 {error: 'No token'}` viraria falso positivo.
 
 `!` só é checado em `.ts`/`.tsx`, e comentários são ignorados em todos os eixos de linha.
 JavaScript não tem non-null assertion, e `// janela baixa!)` não é código.
+
+Os eixos por linha distinguem diff vazio de contexto ausente: arquivo tocado só com
+remoção fica em silêncio (o legado não é do diff), enquanto arquivo novo, untracked ou
+fora de repo é analisado inteiro. Sem essa distinção, a remoção de Pusher no IMC-1717
+acusava uma flag de `window` que estava no `contratos.js` desde sempre.
 
 **Um gate que grita errado é um gate que ninguém lê.** Se aparecer falso positivo, aperte a
 regra no `desenho.py` e rode a bateria antes de commitar. Ela vive no fim deste arquivo.
@@ -283,7 +297,9 @@ recente, e a que fica referencia as outras.
 ## Bateria de regressão dos detectores
 
 Antes de mexer no `desenho.py`, garanta que estes sete continuam com o resultado esperado.
-Os fixtures são o código real dos incidentes.
+Os fixtures são o código real dos incidentes. Os casos de irmãos (7, 7b e 7c) rodam
+sozinhos: `bash scripts/bateria_irmaos.sh`. O caso 15 também, com o commit real como
+fixture: `bash scripts/bateria_estado_window.sh`.
 
 | # | Caso | Esperado |
 |---|---|---|
@@ -293,7 +309,9 @@ Os fixtures são o código real dos incidentes.
 | 4 | `['Bearer',' '].join('')` | 1 FALHOU |
 | 5 | `addEventListener('message')` sem `event.origin` | 1 FALHOU |
 | 6 | `var L = '<?php echo ... ?>'` | 1 FALHOU |
-| 7 | dois arquivos com 90%+ de linhas iguais | 1 FALHOU |
+| 7 | dois arquivos NOVOS com 90%+ de linhas iguais | 1 FALHOU |
+| 7b | gêmeos pré-existentes na base recebendo patch paralelo idêntico | 0 (falso positivo) |
+| 7c | par a 50% na base que o diff eleva acima do limiar | 1 FALHOU |
 | 8 | `as Usuario` | 1 ATENÇÃO |
 | 9 | `as const`, `as Error`, `as unknown` | 0 (falso positivo) |
 | 10 | 3 awaits independentes seguidos | 1 ATENÇÃO |
@@ -301,8 +319,9 @@ Os fixtures são o código real dos incidentes.
 | 12 | `param.push(...)` e `param.campo = ...` | 1 ATENÇÃO cada |
 | 13 | `POST` que insere sem guarda de reenvio | 1 ATENÇÃO |
 | 14 | arquivo limpo do `src/features` | 0 FALHOU |
+| 15 | `window.__flag = true` adicionado (negativos: `location`, `on*`, método, leitura, comentário, diff só de remoção) | 1 ATENÇÃO |
 
-Os casos 2, 3, 9, 11 e 14 são negativos, e existem porque eu já quebrei cada um deles. A
+Os casos 2, 3, 7b, 9, 11 e 14 são negativos, e existem porque eu já quebrei cada um deles. A
 primeira regra de token casava com qualquer middleware que lesse `authorization`; a de `!`
 casava com prosa em português; e uma versão dos eixos por linha ficava muda quando não havia
 contexto git, porque `adds` vinha vazio e eu pulava tudo. **Toda regra nova precisa de um

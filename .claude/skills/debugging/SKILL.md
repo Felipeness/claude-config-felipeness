@@ -7,6 +7,8 @@ description: Structured debugging workflow using MCP tools (Chrome, Playwright, 
 
 Systematic approach to finding and fixing bugs. Stop guessing, start proving.
 
+> **Para bugs complexos que precisam de múltiplas iterações**, prefira `ralph-debug` — ele loopa autonomamente com contexto limpo até o bug estar verificadamente corrigido.
+
 ## Process
 
 ### 1. Reproduce

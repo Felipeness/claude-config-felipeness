@@ -98,7 +98,17 @@ function detectLinter(projectDir) {
   }
   for (const cfg of ESLINT_CONFIG_FILES) {
     if (fs.existsSync(path.join(projectDir, cfg))) {
-      return { bin: 'eslint', args: ['--no-warn-ignored'] };
+      // --no-warn-ignored is ESLint v9+ only; detect version before using it
+      const eslintBin = path.join(projectDir, 'node_modules', '.bin', 'eslint');
+      const versionResult = spawnSync(
+        process.platform === 'win32' ? `${eslintBin}.cmd` : eslintBin,
+        ['--version'],
+        { cwd: projectDir, encoding: 'utf8', shell: process.platform === 'win32' },
+      );
+      const versionLine = (versionResult.stdout || '').trim(); // e.g. "v8.57.1"
+      const major = parseInt((versionLine.match(/^v?(\d+)/) || [])[1], 10);
+      const args = major >= 9 ? ['--no-warn-ignored'] : [];
+      return { bin: 'eslint', args };
     }
   }
   return null;
